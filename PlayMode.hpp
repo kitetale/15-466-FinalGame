@@ -1,5 +1,6 @@
-#include "PPU466.hpp"
 #include "Mode.hpp"
+
+#include "Scene.hpp"
 
 #include <glm/glm.hpp>
 
@@ -23,13 +24,19 @@ struct PlayMode : Mode {
 		uint8_t pressed = 0;
 	} left, right, down, up;
 
-	//some weird background animation:
-	float background_fade = 0.0f;
+	//local copy of the game scene (so code can change it during gameplay):
+	Scene scene;
 
-	//player position:
-	glm::vec2 player_at = glm::vec2(0.0f);
+	//hexapod leg to wobble:
+	Scene::Transform *hip = nullptr;
+	Scene::Transform *upper_leg = nullptr;
+	Scene::Transform *lower_leg = nullptr;
+	glm::quat hip_base_rotation;
+	glm::quat upper_leg_base_rotation;
+	glm::quat lower_leg_base_rotation;
+	float wobble = 0.0f;
+	
+	//camera:
+	Scene::Camera *camera = nullptr;
 
-	//----- drawing handled by PPU466 -----
-
-	PPU466 ppu;
 };

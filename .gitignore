@@ -1,7 +1,12 @@
 objs/
 dist/README-SDL.txt
-dist/pong.ilk
-dist/pong.pdb
+dist/README-glm.txt
+dist/README-libpng.txt
+dist/game.ilk
+dist/game.pdb
 dist/SDL2.dll
-dist/pong
-dist/pong.exe
+dist/game
+dist/game.exe
+scenes/show-meshes*
+scenes/show-scene*
+*.blend[0-9]
