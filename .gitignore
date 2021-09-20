@@ -2,6 +2,9 @@ objs/
 dist/README-SDL.txt
 dist/README-glm.txt
 dist/README-libpng.txt
+dist/README-libogg.txt
+dist/README-libopus.txt
+dist/README-opusfile.txt
 dist/game.ilk
 dist/game.pdb
 dist/SDL2.dll

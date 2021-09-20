@@ -5,7 +5,7 @@ on:
     types: [created]
 
 env:
-  BASE_NAME: game2
+  BASE_NAME: game3
   NEST_LIBS_VERSION: v0.7
 
 jobs:

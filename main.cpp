@@ -7,6 +7,9 @@
 //For asset loading:
 #include "Load.hpp"
 
+//For sound init:
+#include "Sound.hpp"
+
 //GL.hpp will include a non-namespace-polluting set of opengl prototypes:
 #include "GL.hpp"
 
@@ -50,7 +53,7 @@ int main(int argc, char **argv) {
 
 	//create window:
 	SDL_Window *window = SDL_CreateWindow(
-		"gp21 game2: enter the matr... virtual world", //TODO: remember to set a title for your game!
+		"gp21 game3: require sound", //TODO: remember to set a title for your game!
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		1280, 720, //TODO: modify window size if you'd like
 		SDL_WINDOW_OPENGL
@@ -88,6 +91,9 @@ int main(int argc, char **argv) {
 
 	//Hide mouse cursor (note: showing can be useful for debugging):
 	//SDL_ShowCursor(SDL_DISABLE);
+
+	//------------ init sound --------------
+	Sound::init();
 
 	//------------ load assets --------------
 	call_load_functions();
@@ -174,6 +180,7 @@ int main(int argc, char **argv) {
 
 
 	//------------  teardown ------------
+	Sound::shutdown();
 
 	SDL_GL_DeleteContext(context);
 	context = 0;
