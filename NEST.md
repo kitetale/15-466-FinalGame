@@ -36,6 +36,7 @@ Here is a quick overview of what is included. For further information, ☺read t
 			- [`ShowMeshesProgram.hpp`](ShowMeshesProgram.hpp), [`ShowMeshesProgram.cpp`](ShowMeshesProgram.cpp)
 			- [`ShowSceneProgram.hpp`](ShowSceneProgram.hpp), [`ShowSceneProgram.cpp`](ShowSceneProgram.cpp)
 - Here be dragons (files you probably don't need to look at):
+	- [`set-utf8-code-page.manifest`](set-utf8-code-page.manifest) embedded on windows so that the application runs in the UTF-8 code page, as per https://docs.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page .
 	- [`load_wav.hpp`](load_wav.hpp), [`load_wav.cpp`](load_wav.cpp) helper to load wav files. (used by `Sound::Sample`)
 	- [`load_opus.hpp`](load_opus.hpp), [`load_opus.cpp`](load_opus.cpp) helper to load opus files. (used by `Sound::Sample`)
 	- [`make-GL.py`](make-GL.py) does what it says on the tin. Included in case you are curious. You won't need to run it.
@@ -65,9 +66,9 @@ Setup for your development environment should be relatively simple:
 	- MacOS: e.g. `brew install jam`
 	- Windows: (skip this step; jam for windows is included in the nest-libs package -- see Windows Note below)
  3. Extract an appropriate [release of nest-libs](https://github.com/15-466/nest-libs/releases) to a sibling of this folder:
-    - Linux: https://github.com/15-466/nest-libs/releases/download/v0.7/nest-libs-linux-v0.7.tar.gz
-	- MacOS: https://github.com/15-466/nest-libs/releases/download/v0.7/nest-libs-macos-v0.7.tar.gz
-	- Windows: https://github.com/15-466/nest-libs/releases/download/v0.7/nest-libs-windows-v0.7.zip
+    - Linux: https://github.com/15-466/nest-libs/releases/download/v0.8/nest-libs-linux-v0.8.tar.gz
+	- MacOS: https://github.com/15-466/nest-libs/releases/download/v0.8/nest-libs-macos-v0.8.tar.gz
+	- Windows: https://github.com/15-466/nest-libs/releases/download/v0.8/nest-libs-windows-v0.8.zip
 
 Once you are finished, your directory tree should looks something like this:
 
