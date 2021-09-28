@@ -5,8 +5,8 @@ on:
     types: [created]
 
 env:
-  BASE_NAME: game3
-  NEST_LIBS_VERSION: v0.8
+  BASE_NAME: game4
+  NEST_LIBS_VERSION: v0.9
 
 jobs:
   build-windows:
