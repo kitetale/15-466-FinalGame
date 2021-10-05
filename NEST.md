@@ -7,6 +7,7 @@ This name captures the goal of having the various parts and functions relatively
 
 Here is a quick overview of what is included. For further information, ☺read the code☺ !
 - Base code (files you will certainly edit):
+	- [`WalkMesh.cpp`](WalkMesh.cpp) and [`WalkMesh.hpp`](WalkMesh.hpp) contain the start of a walk mesh implementation for you to fill in.
 	- [`main.cpp`](main.cpp) creates the game window and contains the main loop. Set your window title, size, and initial Mode here.
 	- [`PlayMode.hpp`](PlayMode.hpp), [`PlayMode.cpp`](PlayMode.cpp) declaration+definition for a basic PPU demonstration. You'll probably build your game on it.
 	- [`Jamfile`](Jamfile) responsible for telling FTJam how to build the project. Change this when you add additional .cpp files and to change your runtime executable's name.
@@ -43,6 +44,7 @@ Here is a quick overview of what is included. For further information, ☺read t
 	- [`glcorearb.h`](glcorearb.h) used by `make-GL.py` to produce `GL.*pp`
 	- [`make-PathFont-font.py`](make-PathFont-font.py) processes [`PathFont-font.svg`](PathFont-font.svg) to create [`PathFont-font.cpp`](PathFont-font.cpp) (the line-based font used in the DrawLines code).
 	- [`freetype-test.cpp`](freetype-test.cpp) just exists to check that hb/ft programs are compiling+linking properly
+
 
 ## Build Instructions
 
