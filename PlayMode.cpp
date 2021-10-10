@@ -250,6 +250,18 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 	scene.draw(*player.camera);
 
+	/* In case you are wondering if your walkmesh is lining up with your scene, try:
+	{
+		glDisable(GL_DEPTH_TEST);
+		DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
+		for (auto const &tri : walkmesh->triangles) {
+			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		}
+	}
+	*/
+
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
 		float aspect = float(drawable_size.x) / float(drawable_size.y);
