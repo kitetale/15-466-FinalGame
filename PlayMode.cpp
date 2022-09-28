@@ -119,8 +119,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
-			glm::vec3 up = walkmesh->to_world_smooth_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, up) * player.transform->rotation;
+			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
+			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * player.transform->rotation;
 
 			float pitch = glm::pitch(player.camera->transform->rotation);
 			pitch += motion.y * player.camera->fovy;

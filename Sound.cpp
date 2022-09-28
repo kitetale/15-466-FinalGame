@@ -99,24 +99,24 @@ void Sound::unlock() {
 	if (device) SDL_UnlockAudioDevice(device);
 }
 
-std::shared_ptr< Sound::PlayingSample > Sound::play(Sample const &sample, float volume, float pan) {
-	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, volume, pan, false);
+std::shared_ptr< Sound::PlayingSample > Sound::play(Sample const &sample, float play_volume, float pan) {
+	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, play_volume, pan, false);
 	lock();
 	playing_samples.emplace_back(playing_sample);
 	unlock();
 	return playing_sample;
 }
 
-std::shared_ptr< Sound::PlayingSample > Sound::play_3D(Sample const &sample, float volume, glm::vec3 const &position, float half_volume_radius) {
-	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, volume, position, half_volume_radius, false);
+std::shared_ptr< Sound::PlayingSample > Sound::play_3D(Sample const &sample, float play_volume, glm::vec3 const &position, float half_volume_radius) {
+	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, play_volume, position, half_volume_radius, false);
 	lock();
 	playing_samples.emplace_back(playing_sample);
 	unlock();
 	return playing_sample;
 }
 
-std::shared_ptr< Sound::PlayingSample > Sound::loop(Sample const &sample, float volume, float pan) {
-	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, volume, pan, true);
+std::shared_ptr< Sound::PlayingSample > Sound::loop(Sample const &sample, float play_volume, float pan) {
+	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, play_volume, pan, true);
 	lock();
 	playing_samples.emplace_back(playing_sample);
 	unlock();
@@ -125,8 +125,8 @@ std::shared_ptr< Sound::PlayingSample > Sound::loop(Sample const &sample, float 
 
 
 
-std::shared_ptr< Sound::PlayingSample > Sound::loop_3D(Sample const &sample, float volume, glm::vec3 const &position, float half_volume_radius) {
-	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, volume, position, half_volume_radius, true);
+std::shared_ptr< Sound::PlayingSample > Sound::loop_3D(Sample const &sample, float play_volume, glm::vec3 const &position, float half_volume_radius) {
+	std::shared_ptr< Sound::PlayingSample > playing_sample = std::make_shared< Sound::PlayingSample >(sample, play_volume, position, half_volume_radius, true);
 	lock();
 	playing_samples.emplace_back(playing_sample);
 	unlock();

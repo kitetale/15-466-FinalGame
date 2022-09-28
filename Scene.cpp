@@ -202,8 +202,8 @@ void Scene::load(std::string const &filename,
 		float clip_near, clip_far;
 	};
 	static_assert(sizeof(CameraEntry) == 4 + 4 + 4 + 4 + 4, "CameraEntry is packed.");
-	std::vector< CameraEntry > cameras;
-	read_chunk(file, "cam0", &cameras);
+	std::vector< CameraEntry > loaded_cameras;
+	read_chunk(file, "cam0", &loaded_cameras);
 
 	struct LightEntry {
 		uint32_t transform;
@@ -214,8 +214,8 @@ void Scene::load(std::string const &filename,
 		float fov;
 	};
 	static_assert(sizeof(LightEntry) == 4 + 1 + 3 + 4 + 4 + 4, "LightEntry is packed.");
-	std::vector< LightEntry > lights;
-	read_chunk(file, "lmp0", &lights);
+	std::vector< LightEntry > loaded_lights;
+	read_chunk(file, "lmp0", &loaded_lights);
 
 
 	//--------------------------------
@@ -263,7 +263,7 @@ void Scene::load(std::string const &filename,
 
 	}
 
-	for (auto const &c : cameras) {
+	for (auto const &c : loaded_cameras) {
 		if (c.transform >= hierarchy_transforms.size()) {
 			throw std::runtime_error("scene file '" + filename + "' contains camera entry with invalid transform index (" + std::to_string(c.transform) + ")");
 		}
@@ -271,14 +271,14 @@ void Scene::load(std::string const &filename,
 			std::cout << "Ignoring non-perspective camera (" + std::string(c.type, 4) + ") stored in file." << std::endl;
 			continue;
 		}
-		this->cameras.emplace_back(hierarchy_transforms[c.transform]);
-		Camera *camera = &this->cameras.back();
+		cameras.emplace_back(hierarchy_transforms[c.transform]);
+		Camera *camera = &cameras.back();
 		camera->fovy = c.data / 180.0f * 3.1415926f; //FOV is stored in degrees; convert to radians.
 		camera->near = c.clip_near;
 		//N.b. far plane is ignored because cameras use infinite perspective matrices.
 	}
 
-	for (auto const &l : lights) {
+	for (auto const &l : loaded_lights) {
 		if (l.transform >= hierarchy_transforms.size()) {
 			throw std::runtime_error("scene file '" + filename + "' contains lamp entry with invalid transform index (" + std::to_string(l.transform) + ")");
 		}
@@ -294,8 +294,8 @@ void Scene::load(std::string const &filename,
 			std::cout << "Ignoring unrecognized lamp type (" + std::string(&l.type, 1) + ") stored in file." << std::endl;
 			continue;
 		}
-		this->lights.emplace_back(hierarchy_transforms[l.transform]);
-		Light *light = &this->lights.back();
+		lights.emplace_back(hierarchy_transforms[l.transform]);
+		Light *light = &lights.back();
 		light->type = static_cast<Light::Type>(l.type);
 		light->energy = glm::vec3(l.color) / 255.0f * l.energy;
 		light->spot_fov = l.fov / 180.0f * 3.1415926f; //FOV is stored in degrees; convert to radians.
