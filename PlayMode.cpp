@@ -66,10 +66,10 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	character.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	character.camera->transform->position = glm::vec3(0.0f, -3.0f, 3.0f);
+	character.camera->transform->position = glm::vec3(0.0f, -2.0f, 3.0f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	character.camera->transform->rotation = glm::angleAxis(glm::radians(60.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -180,10 +180,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 			// update yaw of character so that it's always facing front
 			character.character_transform->rotation = glm::angleAxis(-motion.x *character.camera->fovy, upDir) * character.character_transform->rotation;
-			//std::cout<<"pos: "<< character.character_transform->position.x << ", "<< character.character_transform->position.y << ", "<<character.character_transform->position.z<<std::endl;
-			glm::vec3 location = character.character_transform->make_local_to_world() * glm::vec4(0.0f,0.0f,0.0f,1.0f);
-			std::cout<<"pos: "<< location.x << ", "<< location.y << ", "<<location.z<<std::endl;
-			
 			
 			return true;
 		}
