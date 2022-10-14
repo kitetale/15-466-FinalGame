@@ -13,23 +13,23 @@
 
 #include <random>
 
-GLuint phonebank_meshes_for_lit_color_texture_program = 0;
-Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
-	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+GLuint proto_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > proto_meshes(LoadTagDefault, []() -> MeshBuffer const * {
+	MeshBuffer const *ret = new MeshBuffer(data_path("proto.pnct"));
+	proto_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
-Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
-		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
+Load< Scene > proto_scene(LoadTagDefault, []() -> Scene const * {
+	return new Scene(data_path("proto.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+		Mesh const &mesh = proto_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
 
 		drawable.pipeline = lit_color_texture_program_pipeline;
 
-		drawable.pipeline.vao = phonebank_meshes_for_lit_color_texture_program;
+		drawable.pipeline.vao = proto_meshes_for_lit_color_texture_program;
 		drawable.pipeline.type = mesh.type;
 		drawable.pipeline.start = mesh.start;
 		drawable.pipeline.count = mesh.count;
@@ -38,13 +38,13 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 });
 
 WalkMesh const *walkmesh = nullptr;
-Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+Load< WalkMeshes > proto_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+	WalkMeshes *ret = new WalkMeshes(data_path("proto.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
 
-PlayMode::PlayMode() : scene(*phonebank_scene) {
+PlayMode::PlayMode() : scene(*proto_scene) {
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
@@ -52,10 +52,8 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//get character mesh
 	for (auto &transform : scene.transforms) {
 		if (transform.name == "character") character.character_transform = &transform;
-		if (transform.name == "raybox") ray1 = &transform;
 	}
-	ray1_base_rot = ray1->rotation;
-	char_base_rot = character.character_transform->rotation;
+	
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -73,10 +71,6 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
-
-	r1.orig = ray1->position;
-	r1.dir = glm::vec3(0.f,0.f,-1.0f);
-	r1_base = r1.dir;
 
 }
 
@@ -193,19 +187,6 @@ void PlayMode::update(float elapsed) {
 	//slowly rotates through [0,1):
 	wobble += elapsed / 10.0f;
 	wobble -= std::floor(wobble);
-
-	ray1->rotation = ray1_base_rot * glm::angleAxis(
-		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
-		glm::vec3(1.0f, 0.0f, 0.0f)
-	);
-	r1.dir = r1_base * glm::angleAxis(
-		glm::radians(40.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
-		glm::vec3(-1.0f, 0.0f, 0.0f)
-	);
-	if (BoxRayCollision(r1)) { //collides with ray
-		std::cout<< "COLLIDING JSDIFJEOIJFIOSEJFCIO:SJFSIJF!!!!!!!!!! " <<std::endl;
-
-	}
 
 	//player walking:
 	{
