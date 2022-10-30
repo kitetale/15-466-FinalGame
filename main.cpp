@@ -1,17 +1,17 @@
 //Mode.hpp declares the "Mode::current" static member variable, which is used to decide where event-handling, updating, and drawing events go:
 #include "Mode.hpp"
 
-//The 'PlayMode' mode plays the game:
-#include "PlayMode.hpp"
+//Starting mode:
+#include "PlantMode.hpp"
 
-//For asset loading:
+//Deal with calling resource loading functions:
 #include "Load.hpp"
-
-//For sound init:
-#include "Sound.hpp"
 
 //GL.hpp will include a non-namespace-polluting set of opengl prototypes:
 #include "GL.hpp"
+
+//Sound subsystem:
+#include "Sound.hpp"
 
 //for screenshots:
 #include "load_save_png.hpp"
@@ -26,21 +26,8 @@
 #include <memory>
 #include <algorithm>
 
-#ifdef _WIN32
-extern "C" { uint32_t GetACP(); }
-#endif
 int main(int argc, char **argv) {
 #ifdef _WIN32
-	{ //when compiled on windows, check that code page is forced to utf-8 (makes file loading/saving work right):
-		//see: https://docs.microsoft.com/en-us/windows/apps/design/globalizing/use-utf8-code-page
-		uint32_t code_page = GetACP();
-		if (code_page == 65001) {
-			std::cout << "Code page is properly set to UTF-8." << std::endl;
-		} else {
-			std::cout << "WARNING: code page is set to " << code_page << " instead of 65001 (UTF-8). Some file handling functions may fail." << std::endl;
-		}
-	}
-
 	//when compiled on windows, unhandled exceptions don't have their message printed, which can make debugging simple issues difficult.
 	try {
 #endif
@@ -66,16 +53,16 @@ int main(int argc, char **argv) {
 
 	//create window:
 	SDL_Window *window = SDL_CreateWindow(
-		"gp22 game5: walking simulator", //TODO: remember to set a title for your game!
+		"gp19 Pool Dozers", //TODO: remember to set a title for your game!
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		1280, 720, //TODO: modify window size if you'd like
+		960, 600, //TODO: modify window size if you'd like
 		SDL_WINDOW_OPENGL
 		| SDL_WINDOW_RESIZABLE //uncomment to allow resizing
 		| SDL_WINDOW_ALLOW_HIGHDPI //uncomment for full resolution on high-DPI screens
 	);
 
 	//prevent exceedingly tiny windows when resizing:
-	SDL_SetWindowMinimumSize(window,100,100);
+	SDL_SetWindowMinimumSize(window, 100, 100);
 
 	if (!window) {
 		std::cerr << "Error creating SDL window: " << SDL_GetError() << std::endl;
@@ -102,17 +89,17 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	//set up sound output:
+	Sound::init();
+
 	//Hide mouse cursor (note: showing can be useful for debugging):
 	//SDL_ShowCursor(SDL_DISABLE);
 
-	//------------ init sound --------------
-	Sound::init();
-
-	//------------ load assets --------------
+	//------------ load resources --------------
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< PlayMode >());
+	Mode::set_current(std::make_shared< PlantMode >());
 
 	//------------ main loop ------------
 
@@ -193,6 +180,7 @@ int main(int argc, char **argv) {
 
 
 	//------------  teardown ------------
+
 	Sound::shutdown();
 
 	SDL_GL_DeleteContext(context);

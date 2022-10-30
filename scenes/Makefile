@@ -17,15 +17,23 @@ EXPORT_SCENE=export-scene.py
 DIST=../dist
 
 all : \
-	$(DIST)/proto.pnct \
-	$(DIST)/proto.w \
-	$(DIST)/proto.scene \
+	$(DIST)/plant.pnct \
+	# $(DIST)/proto.pnct \
+	# $(DIST)/proto.w \
+	# $(DIST)/proto.scene 
 
-$(DIST)/proto.pnct : proto.blend $(EXPORT_MESHES)
-	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
 
-$(DIST)/proto.scene : proto.blend $(EXPORT_SCENE)
-	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
+$(DIST)/plant.pnct : plant.blend $(EXPORT_MESHES)
+	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Plant '$@'
 
-$(DIST)/proto.w : proto.blend $(EXPORT_WALKMESHES)
-	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
+$(DIST)/plant.pnct : plant.blend $(EXPORT_MESHES)
+	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Collection 1 '$@'
+
+# $(DIST)/proto.pnct : proto.blend $(EXPORT_MESHES)
+# 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
+
+# $(DIST)/proto.scene : proto.blend $(EXPORT_SCENE)
+# 	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
+
+# $(DIST)/proto.w : proto.blend $(EXPORT_WALKMESHES)
+# 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
