@@ -167,6 +167,7 @@ void WormMode::update(float elapsed) {
     if (forward) step += elapsed * 1.2f;
     if (backward) step -= elapsed * 1.2f;
     worm->transform->position.y += step *0.8f;
+    player.transform->position.y += step *0.8f;
     worm_animations[0].position -= step *0.8f;
     worm_animations[0].position -= std::floor(worm_animations[0].position);
 
