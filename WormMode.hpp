@@ -26,6 +26,10 @@ struct WormMode : public Mode {
 	bool mouse_captured = false;
 	bool forward = false;
 	bool backward = false;
+    bool left = false;
+    bool right = false;
+
+    glm::quat startingRotation;
 
     //player info:
 	struct Player {

@@ -81,11 +81,13 @@ WormMode::WormMode() : scene(*worm_scene) {
         character.camera = &scene.cameras.back();
         character.camera->fovy = glm::radians(90.0f);
         character.camera->near = 0.01f;
+        character.camera->transform->position = glm::vec3(0.0f, -4.0f, 7.0f);
 
         //rotate camera facing direction (-z) to player facing direction (+y):
         //character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
         player.transform->position = glm::vec3(0.0f,0.0f,0.0f);
+        character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
         //start player walking at nearest walk point:
         player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -122,13 +124,15 @@ WormMode::WormMode() : scene(*worm_scene) {
 
         this->worm = worm1;
         worm->transform->position = glm::vec3(0.0f,0.0f,0.0f);
+
+        startingRotation = worm->transform->rotation;
 		
 		assert(worm_animations.size() == 1);
 	}
 
-    character.camera->transform->parent =  worm->transform;
-    character.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    character.camera->transform->position = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::vec3(0.0f, -4.0f, 7.0f);
+    // character.camera->transform->parent =  worm->transform;
+    // character.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // character.camera->transform->position = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::vec3(0.0f, -4.0f, 7.0f);
 
 }
 
@@ -143,6 +147,8 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 	if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_UP) {
 		forward = true;
+        left = false;
+        right = false;
 		return true;
 	}
 	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_UP) {
@@ -151,12 +157,31 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	}
 	if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
 		backward = true;
+        left = false;
+        right = false;
 		return true;
 	}
 	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
 		backward = false;
 		return true;
 	}
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+		left = true;
+		return true;
+	}
+	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+		left = false;
+		return true;
+	}
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+		right = true;
+		return true;
+	}
+	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+		right = false;
+		return true;
+	}
+
 
 	return false;
 }
@@ -164,14 +189,28 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void WormMode::update(float elapsed) {
 	
     float step = 0.0f;
-    float speed = 3.0f;
+    float sideways = 0.0f;
+    float speedForward = 1.0f;
+    float speedSideways = 10.0f;
+
     if (forward) step += 1.0f;
-    if (backward) step += -1.0f;
-    if (step != 0.0f) step = step * speed * elapsed;
+    if (backward) step -= 1.0f;
+    if (worm_animations[0].position <= 0.2f || worm_animations[0].position>=0.8f) {
+        if (left) sideways -= 1.0f;
+        if (right) sideways += 1.0f;
+    }
+    if (step != 0.0f) {
+        step = step * speedForward * elapsed;
+        sideways = 0.0f;
+    }
+    if (sideways != 0.0f) {
+        sideways = sideways * speedSideways * elapsed;
+        step = 0.0f;
+    }
 
     {
         //get move in world coordinate system:
-		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(0.0f, step, 0.0f, 0.0f);
+		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(sideways, step, 0.0f, 0.0f);
         //using a for() instead of a while() here so that if walkpoint gets stuck in
 		// some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter) {
@@ -226,8 +265,18 @@ void WormMode::update(float elapsed) {
 		// character.character_transform->position = player.transform->position;
 
         worm->transform->position.y += step;
+        worm->transform->position.x += sideways;
+        character.camera->transform->position = worm->transform->position + glm::vec3(0.0f, -4.0f, 7.0f);
+
+        float angle = (sideways*60.0f);
+        worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        if (!sideways && (worm->transform->rotation.w != -worm->transform->rotation.y)) {
+            worm->transform->rotation = startingRotation;
+        }
+
         
-        worm_animations[0].position -= step *0.8f;
+        worm_animations[0].position += step *0.8f;
         worm_animations[0].position -= std::floor(worm_animations[0].position);
 
         for (auto &anim : worm_animations) {
