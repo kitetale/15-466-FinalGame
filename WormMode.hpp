@@ -29,7 +29,13 @@ struct WormMode : public Mode {
     bool left = false;
     bool right = false;
 
-    glm::quat startingRotation;
+    uint8_t morph = 0; // 0 is worm, 1 is cat sphere
+
+    glm::quat startingRotation; // for worm
+
+    //goal to reach
+	Scene::Transform *goal = nullptr;
+	Scene::Transform *topGoal = nullptr;
 
     //player info:
 	struct Player {
