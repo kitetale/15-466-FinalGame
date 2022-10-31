@@ -45,6 +45,9 @@ Load< GLuint > worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, []
 Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
 	return new Scene(data_path("worm.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = worm_meshes->lookup(mesh_name);
+        
+        std::cout<<mesh_name<<std::endl;
+        
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
@@ -68,7 +71,7 @@ Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 });
 
 // ************************ WORM MODE **************************
-WormMode::WormMode() {
+WormMode::WormMode() : scene(*worm_scene) {
     // MESH & WALKMESH SETUP ---------------------------------------------------
     {
         //create a player transform:
@@ -171,12 +174,11 @@ void WormMode::update(float elapsed) {
     worm_animations[0].position -= step *0.8f;
     worm_animations[0].position -= std::floor(worm_animations[0].position);
 
-
 	for (auto &anim : worm_animations) {
 		anim.update(elapsed);
 	}
 
-    /*
+    
     {
         //get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(0.0f, step, 0.0f, 0.0f);
@@ -230,10 +232,10 @@ void WormMode::update(float elapsed) {
 		//update player's position to respect walking:
 		player.transform->position = walkmesh->to_world_point(player.at);
 
-		// update character mesh's position to respect walking
-		character.character_transform->position = walkmesh->to_world_point(player.at);
+		// // update character mesh's position to respect walking
+		// character.character_transform->position = player.transform->position;
     }
-    */
+    
 }
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
@@ -257,11 +259,11 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	//set up basic OpenGL state:
 	glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	// glEnable(GL_BLEND);
+	// glBlendEquation(GL_FUNC_ADD);
+	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// glEnable(GL_CULL_FACE);
+	// glCullFace(GL_BACK);
 
 	scene.draw(*character.camera);
 
