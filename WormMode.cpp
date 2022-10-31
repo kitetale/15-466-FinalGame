@@ -97,10 +97,11 @@ WormMode::WormMode() : scene(*worm_scene) {
         if (morph == 1) {
             player.transform->position = glm::vec3(2.0f,1.0f,0.0f);
 	        character.character_transform->position = glm::vec3(2.0f,1.0f,0.0f);
+            //start player walking at nearest walk point:
+            player.at = walkmesh->nearest_walk_point(player.transform->position);
         }
 
-        //start player walking at nearest walk point:
-        player.at = walkmesh->nearest_walk_point(player.transform->position);
+        
     }
 
     // ANIMATION SETUP ---------------------------------------------------------
@@ -222,10 +223,13 @@ void WormMode::update(float elapsed) {
     if (justChanged){
         if (morph == 0){
             worm->transform->position = player.transform->position;
+            character.character_transform->position = glm::vec3(0.0f, -20.0f, 0.0f);
         }
         if (morph == 1){
+            character.character_transform->position = worm->transform->position;
             player.transform->position = worm->transform->position;
-            
+            worm->transform->position = glm::vec3(0.0f, -20.0f, 0.0f);
+            player.at = walkmesh->nearest_walk_point(player.transform->position);
         }
         justChanged = false;
     }
@@ -268,7 +272,8 @@ void WormMode::update(float elapsed) {
 		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
     }
 
-    {
+
+    if (morph == 1){
         //get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
         //using a for() instead of a while() here so that if walkpoint gets stuck in
@@ -317,17 +322,16 @@ void WormMode::update(float elapsed) {
 		if (remain != glm::vec3(0.0f)) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
+    }
 
-		//update player's position to respect walking:
-		player.transform->position = walkmesh->to_world_point(player.at);
-
+    {
 		// update character mesh's position to respect walking
 		// character.character_transform->position = player.transform->position;
         if (morph == 0){
             worm->transform->position.y += move.y;
             worm->transform->position.x += move.x;
 
-            character.character_transform->position = worm->transform->position;
+            player.transform->position = worm->transform->position;
 
             character.camera->transform->position = worm->transform->position + glm::vec3(0.0f, -4.0f, 7.0f);
             character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -347,7 +351,11 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
+            //update player's position to respect walking:
+		    player.transform->position = walkmesh->to_world_point(player.at);
+
             character.character_transform->position = walkmesh->to_world_point(player.at);
+            
             character.camera->transform->position = player.transform->position + glm::vec3(0.0f, -2.0f, 3.0f);
             character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         }
