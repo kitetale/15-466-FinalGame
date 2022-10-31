@@ -157,10 +157,16 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
     // morphing
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_a) {
+        if (morph != 0) {
+            justChanged = true;
+        }
 		morph = 0;
 		return true;
 	}
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_s) {
+        if (morph != 1){
+            justChanged = true;
+        }
 		morph = 1;
 		return true;
 	}
@@ -213,6 +219,17 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void WormMode::update(float elapsed) {
+    if (justChanged){
+        if (morph == 0){
+            worm->transform->position = player.transform->position;
+        }
+        if (morph == 1){
+            player.transform->position = worm->transform->position;
+            
+        }
+        justChanged = false;
+    }
+
     glm::vec2 move = glm::vec2(0.0f);
 
     if (morph == 0){
@@ -309,7 +326,11 @@ void WormMode::update(float elapsed) {
         if (morph == 0){
             worm->transform->position.y += move.y;
             worm->transform->position.x += move.x;
+
+            character.character_transform->position = worm->transform->position;
+
             character.camera->transform->position = worm->transform->position + glm::vec3(0.0f, -4.0f, 7.0f);
+            character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
             float angle = (move.x*60.0f);
             worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -327,6 +348,8 @@ void WormMode::update(float elapsed) {
         }
         if (morph == 1) {
             character.character_transform->position = walkmesh->to_world_point(player.at);
+            character.camera->transform->position = player.transform->position + glm::vec3(0.0f, -2.0f, 3.0f);
+            character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         }
     }
     

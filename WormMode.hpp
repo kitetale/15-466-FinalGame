@@ -30,6 +30,7 @@ struct WormMode : public Mode {
     bool right = false;
 
     uint8_t morph = 0; // 0 is worm, 1 is cat sphere
+    bool justChanged = false;
 
     glm::quat startingRotation; // for worm
 
