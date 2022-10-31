@@ -45,9 +45,6 @@ Load< GLuint > worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, []
 Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
 	return new Scene(data_path("worm.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = worm_meshes->lookup(mesh_name);
-        
-        std::cout<<mesh_name<<std::endl;
-        
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
@@ -78,23 +75,17 @@ WormMode::WormMode() : scene(*worm_scene) {
         scene.transforms.emplace_back();
         player.transform = &scene.transforms.back();
 
-        //get worm character mesh
-        for (auto &transform : scene.transforms) {
-            if (transform.name == "worm") character.character_transform = &transform;
-        }
-
         //create a player camera attached to a child of the player transform:
         scene.transforms.emplace_back();
         scene.cameras.emplace_back(&scene.transforms.back());
         character.camera = &scene.cameras.back();
         character.camera->fovy = glm::radians(90.0f);
         character.camera->near = 0.01f;
-        character.camera->transform->parent = player.transform;
-
-        character.camera->transform->position = glm::vec3(0.0f, -4.0f, 7.0f);
 
         //rotate camera facing direction (-z) to player facing direction (+y):
-        character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        //character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        player.transform->position = glm::vec3(0.0f,0.0f,0.0f);
 
         //start player walking at nearest walk point:
         player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -123,15 +114,21 @@ WormMode::WormMode() : scene(*worm_scene) {
         scene.transforms.emplace_back();
         Scene::Transform *transform = &scene.transforms.back();
         transform->position.x = 0.0f;
+        transform->position.y = 0.0f;
         transform->rotation = glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         scene.drawables.emplace_back(transform);
         Scene::Drawable *worm1 = &scene.drawables.back();
         worm1->pipeline = worm_info;
 
         this->worm = worm1;
+        worm->transform->position = glm::vec3(0.0f,0.0f,0.0f);
 		
 		assert(worm_animations.size() == 1);
 	}
+
+    character.camera->transform->parent =  worm->transform;
+    character.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    character.camera->transform->position = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::vec3(0.0f, -4.0f, 7.0f);
 
 }
 
@@ -167,18 +164,11 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 void WormMode::update(float elapsed) {
 	
     float step = 0.0f;
-    if (forward) step += elapsed * 1.2f;
-    if (backward) step -= elapsed * 1.2f;
-    worm->transform->position.y += step *0.8f;
-    player.transform->position.y += step *0.8f;
-    worm_animations[0].position -= step *0.8f;
-    worm_animations[0].position -= std::floor(worm_animations[0].position);
+    float speed = 3.0f;
+    if (forward) step += 1.0f;
+    if (backward) step += -1.0f;
+    if (step != 0.0f) step = step * speed * elapsed;
 
-	for (auto &anim : worm_animations) {
-		anim.update(elapsed);
-	}
-
-    
     {
         //get move in world coordinate system:
 		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(0.0f, step, 0.0f, 0.0f);
@@ -234,6 +224,15 @@ void WormMode::update(float elapsed) {
 
 		// // update character mesh's position to respect walking
 		// character.character_transform->position = player.transform->position;
+
+        worm->transform->position.y += step;
+        
+        worm_animations[0].position -= step *0.8f;
+        worm_animations[0].position -= std::floor(worm_animations[0].position);
+
+        for (auto &anim : worm_animations) {
+            anim.update(elapsed);
+        }
     }
     
 }
@@ -259,11 +258,6 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	//set up basic OpenGL state:
 	glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
-	// glEnable(GL_BLEND);
-	// glBlendEquation(GL_FUNC_ADD);
-	// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// glEnable(GL_CULL_FACE);
-	// glCullFace(GL_BACK);
 
 	scene.draw(*character.camera);
 
