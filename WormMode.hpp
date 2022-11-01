@@ -41,6 +41,9 @@ struct WormMode : public Mode {
 	Scene::Transform *topGoal = nullptr;
 	Scene::Transform *rectGoal = nullptr;
 
+	bool justFlipped = false; // for morph 2 flipping scene
+	bool isFlipped = false; // for morph 2 flipping scene
+
     // Player info:
 	struct Player {
 		WalkPoint at;
@@ -71,7 +74,7 @@ struct WormMode : public Mode {
 		bool ctype = true; // true if standard false if animated
 		bool isTallSide = true; // rectangle only 
 		int64_t count = 0; // rectangle only
-	} new_worm, catball, rectangle;
+	} new_worm, catball, rectangle, blob;
 
 	// 2: rectangle only
 	bool isTallSide = true; // rectangle only 
