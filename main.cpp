@@ -164,9 +164,10 @@ int main(int argc, char **argv) {
 			//if frames are taking a very long time to process,
 			//lag to avoid spiral of death:
 			elapsed = std::min(0.1f, elapsed);
-
+			// Mode::current->flipped = 0;
 			Mode::current->update(elapsed);
 			if (!Mode::current) break;
+			Mode::current->flipped = 0;
 		}
 
 		{ //(3) call the current mode's "draw" function to produce output:

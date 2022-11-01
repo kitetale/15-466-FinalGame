@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <set>
+#include <stdexcept>
 
 void Attrib::VertexAttribPointer(GLint location) const {
 	//store old buffer binding:

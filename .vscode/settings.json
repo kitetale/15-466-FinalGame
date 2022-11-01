@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "algorithm": "cpp",
+        "ios": "cpp",
+        "type_traits": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp",
+        "compare": "cpp",
+        "fstream": "cpp",
+        "xlocinfo": "cpp",
+        "iostream": "cpp"
+    }
+}

@@ -24,5 +24,8 @@ struct Mode : std::enable_shared_from_this< Mode > {
 	// use 'set_current' to change the current Mode (e.g., to switch to a menu)
 	static std::shared_ptr< Mode > current;
 	static void set_current(std::shared_ptr< Mode > const &);
+
+	// For WormMode rectangle character
+	int flipped = 0;
 };
 
