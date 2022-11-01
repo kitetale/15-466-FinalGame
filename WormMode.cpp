@@ -634,14 +634,36 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 
 	scene.draw(*camera);
 
-    {
+    // {
+	// 	glDisable(GL_DEPTH_TEST);
+	// 	DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
+	// 	for (auto const &tri : walkmesh->triangles) {
+	// 		lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 	}
+	// }
+
+    { //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
-		for (auto const &tri : walkmesh->triangles) {
-			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-		}
+		float aspect = float(drawable_size.x) / float(drawable_size.y);
+		DrawLines lines(glm::mat4(
+			1.0f / aspect, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		));
+
+		constexpr float H = 0.09f;
+		lines.draw_text("Arrows moves; Space for specialty, NumKeys Morphs",
+			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+		float ofs = 2.0f / drawable_size.y;
+		lines.draw_text("Arrows moves; Space for specialty, NumKeys Morphs",
+			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
 
 	GL_ERRORS();
