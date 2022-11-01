@@ -77,7 +77,7 @@ WormMode::WormMode() : scene(*worm_scene) {
 
         //get character mesh
         for (auto &transform : scene.transforms) {
-            if (transform.name == "character") character.character_transform = &transform;
+            if (transform.name == "catball") catball.character_transform = &transform;
             if (transform.name == "goal") goal = &transform;
             if (transform.name == "topGoal") topGoal = &transform;
         }
@@ -85,18 +85,18 @@ WormMode::WormMode() : scene(*worm_scene) {
         //create a player camera attached to a child of the player transform:
         scene.transforms.emplace_back();
         scene.cameras.emplace_back(&scene.transforms.back());
-        character.camera = &scene.cameras.back();
-        character.camera->fovy = glm::radians(90.0f);
-        character.camera->near = 0.01f;
-        character.camera->transform->position = glm::vec3(0.0f, -4.0f, 7.0f);
+        camera = &scene.cameras.back();
+        camera->fovy = glm::radians(90.0f);
+        camera->near = 0.01f;
+        camera->transform->position = glm::vec3(0.0f, -4.0f, 7.0f);
 
         player.transform->position = glm::vec3(0.0f,0.0f,0.0f);
         //rotate camera facing direction (-z) to player facing direction (+y):
-        character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
         if (morph == 1) {
             player.transform->position = glm::vec3(2.0f,1.0f,0.0f);
-	        character.character_transform->position = glm::vec3(2.0f,1.0f,0.0f);
+	        catball.character_transform->position = glm::vec3(2.0f,1.0f,0.0f);
             //start player walking at nearest walk point:
             player.at = walkmesh->nearest_walk_point(player.transform->position);
         }
@@ -141,9 +141,9 @@ WormMode::WormMode() : scene(*worm_scene) {
 		assert(worm_animations.size() == 1);
 	}
 
-    // character.camera->transform->parent =  worm->transform;
-    // character.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    // character.camera->transform->position = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::vec3(0.0f, -4.0f, 7.0f);
+    // camera->transform->parent =  worm->transform;
+    // camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // camera->transform->position = glm::angleAxis(glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))*glm::vec3(0.0f, -4.0f, 7.0f);
 
 }
 
@@ -223,10 +223,10 @@ void WormMode::update(float elapsed) {
     if (justChanged){
         if (morph == 0){
             worm->transform->position = player.transform->position;
-            character.character_transform->position = glm::vec3(0.0f, -20.0f, 0.0f);
+            catball.character_transform->position = glm::vec3(0.0f, -20.0f, 0.0f);
         }
         if (morph == 1){
-            character.character_transform->position = worm->transform->position;
+            catball.character_transform->position = worm->transform->position;
             player.transform->position = worm->transform->position;
             worm->transform->position = glm::vec3(0.0f, -20.0f, 0.0f);
             player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -240,7 +240,7 @@ void WormMode::update(float elapsed) {
         float step = 0.0f;
         float sideways = 0.0f;
         float speedForward = 1.0f;
-        float speedSideways = 10.0f;
+        float speedSideways = 12.0f;
 
         if (forward) step += 1.0f;
         if (backward) step -= 1.0f;
@@ -326,15 +326,15 @@ void WormMode::update(float elapsed) {
 
     {
 		// update character mesh's position to respect walking
-		// character.character_transform->position = player.transform->position;
+		// catball.character_transform->position = player.transform->position;
         if (morph == 0){
             worm->transform->position.y += move.y;
             worm->transform->position.x += move.x;
 
             player.transform->position = worm->transform->position;
 
-            character.camera->transform->position = worm->transform->position + glm::vec3(0.0f, -4.0f, 7.0f);
-            character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            camera->transform->position = worm->transform->position + camera_offset_pos;
+            camera->transform->rotation = camera_offset_rot;
 
             float angle = (move.x*60.0f);
             worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -354,10 +354,10 @@ void WormMode::update(float elapsed) {
             //update player's position to respect walking:
 		    player.transform->position = walkmesh->to_world_point(player.at);
 
-            character.character_transform->position = walkmesh->to_world_point(player.at);
+            catball.character_transform->position = walkmesh->to_world_point(player.at);
             
-            character.camera->transform->position = player.transform->position + glm::vec3(0.0f, -2.0f, 3.0f);
-            character.camera->transform->rotation = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            camera->transform->position = player.transform->position + camera_offset_pos;
+            camera->transform->rotation = camera_offset_rot;
         }
     }
     
@@ -365,7 +365,7 @@ void WormMode::update(float elapsed) {
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
-	character.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//Draw scene:
     //set up light type and position for lit_color_texture_program:
@@ -385,7 +385,7 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
-	scene.draw(*character.camera);
+	scene.draw(*camera);
 
 	GL_ERRORS();
 }

@@ -46,17 +46,25 @@ struct WormMode : public Mode {
 	} player;
 
 	// camera 
-	struct Character {
-		Scene::Transform *character_transform = nullptr;
-		Scene::Camera *camera = nullptr;
-	} character;
-
-	//scene:
-	Scene scene;
-	Scene::Drawable *worm = nullptr;
+	Scene::Camera *camera = nullptr;
 	float camera_radius = 10.0f;
 	float camera_azimuth = glm::radians(60.0f);
 	float camera_elevation = glm::radians(45.0f);
+	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -4.0f, 7.0f);
+	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	//scene:
+	Scene scene;
+
+	// different characters info
+	// 0: worm
+	Scene::Drawable *worm = nullptr;
+	// 1: catball
+	struct Character {
+		Scene::Transform *character_transform = nullptr;
+	} catball;
+	// more characters info add here
+
 
 	std::vector< BoneAnimationPlayer > worm_animations;
 };
