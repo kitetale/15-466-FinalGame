@@ -82,21 +82,7 @@ WormMode::WormMode() : scene(*worm_scene) {
         //get character mesh
         for (auto &transform : scene.transforms) {
             if (transform.name == "catball") catball.character_transform = &transform;
-            if (transform.name == "rectangle") {
-                rectangle.character_transform = &transform;
-                auto rotation  = transform.rotation;
-                // std::cout << "TALL ROT: " << rotation.x << " " << rotation.y << " " << rotation.z << " " << rotation.w << std::endl;
-            }
-            if (transform.name == "forwardrect") {
-                rectangle.character_transform = &transform;
-                auto rotation  = transform.rotation;
-                // std::cout << "FOR ROT: " << rotation.x << " " << rotation.y << " " << rotation.z << " " << rotation.w << std::endl;
-            }
-            if (transform.name == "rightrect") {
-                rectangle.character_transform = &transform;
-                auto rotation  = transform.rotation;
-                // std::cout << "RIGHT ROT: " << rotation.x << " " << rotation.y << " " << rotation.z << " " << rotation.w << std::endl;
-            }
+            if (transform.name == "rectangle") rectangle.character_transform = &transform;
             if (transform.name == "goal") goal = &transform;
             if (transform.name == "topGoal") topGoal = &transform;
             if (transform.name == "rectGoal") rectGoal = &transform;
