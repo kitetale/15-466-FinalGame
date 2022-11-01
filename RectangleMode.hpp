@@ -1,23 +1,29 @@
+#pragma once
+
 #include "Mode.hpp"
 
+#include "BoneAnimation.hpp"
+#include "GL.hpp"
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
 
+#include <SDL.h>
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <deque>
+#include <list>
 
-struct PlayMode : Mode {
-	PlayMode();
-	virtual ~PlayMode();
+struct RectangleMode : public Mode {
+	RectangleMode();
+	virtual ~RectangleMode();
 
-	//functions called by main loop:
-	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
+    //functions called by main loop:
+    virtual bool handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) override;
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
-	//----- game state -----
+    //----- game state -----
 	//collision check:
 	struct Ray {
 		glm::vec3 orig;
@@ -26,7 +32,7 @@ struct PlayMode : Mode {
 
 	glm::vec3 r1_base;
 
-	//width, length, height of character
+    //width, length, height of character
 	glm::vec3 dimension = glm::vec3 (1.0f, 1.0f, 2.0f); // height is from the floor
 	glm::vec3 halfDim = dimension/2.0f; //half of each for ease of computation
 	glm::vec3 minBound = glm::vec3 (0.0f, 0.0f, 0.0f); // in world coord, update by player pos
@@ -34,13 +40,14 @@ struct PlayMode : Mode {
 
 	bool BoxRayCollision(Ray r);
 
+
 	//input tracking:
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
 	} left, right, down, up;
 
-	//local copy of the game scene (so code can change it during gameplay):
+   //local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
 	Scene::Transform *ray1 = nullptr;
