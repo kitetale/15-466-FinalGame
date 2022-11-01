@@ -70,6 +70,7 @@ struct WormMode : public Mode {
 		Scene::Drawable *character_animate = nullptr; // all animated assets i.e. worm 
 		bool ctype = true; // true if standard false if animated
 		bool isTallSide = true; // rectangle only 
+		int64_t count = 0; // rectangle only
 	} new_worm, catball, rectangle;
 
 	// 2: rectangle only

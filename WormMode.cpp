@@ -366,54 +366,66 @@ void WormMode::update(float elapsed) {
     } else if (morph == 2 && flipped < 1) {
         if (left && !right) {
             move.x =-2.0f;
-            if (isTallSide) {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                move.z = -1.0f;
-                
-            } else {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                move.z = 1.0f;
+            rectangle.count += 1;
+            if (rectangle.count % 7 == 1){
+                if (isTallSide) {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    move.z = -1.0f;
+                    
+                } else {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    move.z = 1.0f;
+                }
             }
         }
 		if (!left && right) {
             move.x = 2.0f;
-            if (isTallSide) {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                move.z = -1.0f;
-                
-            } else {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                move.z = 1.0f;
+            rectangle.count += 1;
+            if (rectangle.count % 7 == 1){
+                if (isTallSide) {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    move.z = -1.0f;
+                    
+                } else {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    move.z = 1.0f;
+                }
             }
         }
 		if (backward && !forward) {
             move.y =-2.0f;
-            if (isTallSide) {
-                rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                move.z = -1.0f;
-                
-            } else {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                move.z = 1.0f;
+            rectangle.count += 1;
+            if (rectangle.count % 7 == 1){
+                if (isTallSide) {
+                    rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    move.z = -1.0f;
+                    
+                } else {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    move.z = 1.0f;
+                }
             }
         }
 		if (!backward && forward) {
             move.y = 2.0f;
-            if (isTallSide) {
-                rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                move.z = -1.0f;
-                
-            } else {
-                rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                move.z = 1.0f;
+            rectangle.count += 1;
+            if (rectangle.count % 7 == 1){
+                if (isTallSide) {
+                    rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    move.z = -1.0f;
+                    
+                } else {
+                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    move.z = 1.0f;
+                }
             }
         }
 
@@ -517,6 +529,8 @@ void WormMode::update(float elapsed) {
             // camera->transform->rotation = camera_offset_rot;
         }
         if (morph == 2) {
+            move.x *= elapsed;
+            move.y *= elapsed;
             rectangle.character_transform->position.y += move.y;
             rectangle.character_transform->position.x += move.x;
             
