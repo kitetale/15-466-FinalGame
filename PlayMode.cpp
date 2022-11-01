@@ -317,6 +317,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	scene.draw(*character.camera);
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
+	*/
 	{
 		glDisable(GL_DEPTH_TEST);
 		DrawLines lines(character.camera->make_projection() * glm::mat4(character.camera->transform->make_world_to_local()));
@@ -326,7 +327,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 		}
 	}
-	*/
+	
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
