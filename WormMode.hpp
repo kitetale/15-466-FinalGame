@@ -23,64 +23,66 @@ struct WormMode : public Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
-	//controls:
+	// Controls:
 	bool mouse_captured = false;
 	bool forward = false;
 	bool backward = false;
     bool left = false;
     bool right = false;
 
-	uint8_t morph = 0; // 0 is worm, 1 is cat sphere, 2 is rectangle
-	uint8_t old_morph = 0; // For changing between two characters
-    bool justChanged = true;
-
-    glm::quat startingRotation; // for worm
-
-    //goal to reach
-	Scene::Transform *goal = nullptr;
-	Scene::Transform *topGoal = nullptr;
-	Scene::Transform *rectGoal = nullptr;
-
-	bool justFlipped = false; // for morph 2 flipping scene
-	bool isFlipped = false; // for morph 2 flipping scene
-
-    // Player info:
-	struct Player {
-		WalkPoint at;
-		//transform is at player's feet and will be yawed by mouse left/right motion:
-		Scene::Transform *transform = nullptr;
-	} player;
-
 	// Camera 
 	Scene::Camera *camera = nullptr;
 	float camera_radius = 10.0f;
 	float camera_azimuth = glm::radians(60.0f);
 	float camera_elevation = glm::radians(45.0f);
-	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -4.0f, 7.0f);
+	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -20.0f, 7.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::vec3 character_off_pos = glm::vec3(0.0f, -20.0f, 0.0f);
 
 	// Scene:
 	Scene scene;
 
-	// Different characters info
-	// 0: worm
-	Scene::Drawable *worm = nullptr;
+	// In-game attributes: 
+	glm::vec3 start_pos = glm::vec3(2.0f,1.0f,0.0f);
 
-	// 1: catball
+	uint8_t morph = 0; // 0 is worm, 1 is cat sphere, 2 is rectangle
+	uint8_t old_morph = 0; // For changing between two characters
+
+    //goal to reach
+	Scene::Transform *goal = nullptr;
+	Scene::Transform *topGoal = nullptr;
+	Scene::Transform *rectGoal = nullptr;
+
+    // Player info:
+	struct Player {
+		WalkPoint at;
+		// Transform is at player's feet and will be yawed by mouse left/right motion:
+		Scene::Transform *transform = nullptr;
+	} player;
+
+	// Different characters info
 	struct Character {
-		Scene::Transform *character_transform = nullptr; // all 'standard' assets
-		Scene::Drawable *character_animate = nullptr; // all animated assets i.e. worm 
+		Scene::Transform *ch_transform = nullptr; // all 'standard' assets
+		Scene::Drawable *ch_animate = nullptr; // all animated assets i.e. worm 
 		bool ctype = true; // true if standard false if animated
+		glm::quat wstarting_rotation; 
 		bool isTallSide = true; // rectangle only 
 		int64_t count = 0; // rectangle only
-	} new_worm, catball, rectangle, blob;
-
-	// 2: rectangle only
-	bool isTallSide = true; // rectangle only 
-	// int flipped = false;
-
+	} worm, catball, rectangle, blob;
 	std::unordered_map<int, Character> game_characters; 
 
+	// 0: worm animations 
 	std::vector< BoneAnimationPlayer > worm_animations;
+
+	// 2: rectangle only
+	bool isTallSide = true; 
+	// int flipped = false;
+
+	bool justFlipped = false; // for morph 2 flipping scene
+	bool isFlipped = false; // for morph 2 flipping scene
+
+	// In-game events: 
+	void morphCharacter(bool forced); // Change character
+
+
 };
