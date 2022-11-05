@@ -81,9 +81,9 @@ WormMode::WormMode() : scene(*worm_scene) {
 
         //get character mesh
         for (auto &transform : scene.transforms) {
-            if (transform.name == "catball") catball.character_transform = &transform;
-            if (transform.name == "rectangle") rectangle.character_transform = &transform;
-            if (transform.name == "goal") blob.character_transform = &transform;
+            if (transform.name == "catball") catball.ch_transform = &transform;
+            if (transform.name == "rectangle") rectangle.ch_transform = &transform;
+            if (transform.name == "goal") blob.ch_transform = &transform;
             // if (transform.name == "goal") goal = &transform;
             if (transform.name == "topGoal") topGoal = &transform;
             if (transform.name == "rectGoal") rectGoal = &transform;
@@ -104,21 +104,16 @@ WormMode::WormMode() : scene(*worm_scene) {
         // Default is cat 
         morph = 1;
         if (morph == 1) {
-            player.transform->position = glm::vec3(2.0f,1.0f,0.0f);
-	        catball.character_transform->position = glm::vec3(2.0f,1.0f,0.0f);
+            player.transform->position = start_pos;
+	        catball.ch_transform->position = start_pos;
             //start player walking at nearest walk point:
             player.at = walkmesh->nearest_walk_point(player.transform->position);
         }
-
-        // worm->transform->position = camera_offset_pos;
-        // rectangle.character_transform->position = camera_offset_pos;
-
-        
     }
 
-    // ANIMATION SETUP ---------------------------------------------------------
+    // Worm animation setup ----------------------------------------------------
 	{ 
-        //put some worms around the edge:
+        // Put some worms around the edge:
 		Scene::Drawable::Pipeline worm_info;
 		worm_info = bone_lit_color_texture_program_pipeline;
 
@@ -126,7 +121,7 @@ WormMode::WormMode() : scene(*worm_scene) {
 		worm_info.start = worm_banims->mesh.start;
 		worm_info.count = worm_banims->mesh.count;
 
-        // add crawl animation to worm_animations list
+        // Add crawl animation to worm_animations list
 		worm_animations.reserve(1);
         worm_animations.emplace_back(*worm_banims, *worm_banim_crawl, BoneAnimationPlayer::Loop, 0.0f);
 
@@ -135,6 +130,8 @@ WormMode::WormMode() : scene(*worm_scene) {
         worm_info.set_uniforms = [wormAnimation](){
             wormAnimation->set_uniform(bone_lit_color_texture_program->BONES_mat4x3_array);
         };
+
+        assert(worm_animations.size() == 1);
 
         scene.transforms.emplace_back();
         Scene::Transform *transform = &scene.transforms.back();
@@ -145,34 +142,28 @@ WormMode::WormMode() : scene(*worm_scene) {
         Scene::Drawable *worm1 = &scene.drawables.back();
         worm1->pipeline = worm_info;
 
-        this->worm = worm1;
-        worm->transform->position = glm::vec3(0.0f,0.0f,0.0f);
-
-        startingRotation = worm->transform->rotation;
-		
-		assert(worm_animations.size() == 1);
-
-        // New worm - TOOD: fix worm 
-        new_worm.character_animate = this->worm; 
-        new_worm.ctype = false; 
+        // Initialize worm
+        this->worm.ch_animate = worm1;
+        worm.ch_animate->transform->position =  glm::vec3(0.0f);
+        worm.ctype = false; 
+        worm.wstarting_rotation = worm.ch_animate->transform->rotation; 
 	}
 
     // Insert all characters into game_characters
     {
-        game_characters.insert(std::pair<int, Character>(0, new_worm)); 
+        game_characters.insert(std::pair<int, Character>(0, worm)); 
         game_characters.insert(std::pair<int, Character>(1, catball));
         game_characters.insert(std::pair<int, Character>(2, rectangle));
         game_characters.insert(std::pair<int, Character>(3, blob));
-	    // TODO - Kavya: insert your character into map 
 
         // Set all other characters offscreen
         for (auto &character : game_characters) {
             if (character.first != morph) {
-                Character ch = character.second;
+                Character &ch = character.second;
                 if (ch.ctype) {
-                    ch.character_transform->position = character_off_pos;
+                    ch.ch_transform->position = character_off_pos;
                 } else {
-                    ch.character_animate->transform->position = character_off_pos;
+                    ch.ch_animate->transform->position = character_off_pos;
                 } 
             }
         }
@@ -188,41 +179,29 @@ WormMode::~WormMode() {
 }
 
 bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	//ignore any keys that are the result of automatic key repeat:
+	// Ignore any keys that are the result of automatic key repeat:
 	if (evt.type == SDL_KEYDOWN && evt.key.repeat) {
 		return false;
 	}
 
-    // morphing
+    // Morphing - switching characters
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_1) {
-        if (morph != 0) {
-            old_morph = morph;
-            justChanged = true;
-        }
+        if (morph != 0) old_morph = morph;
 		morph = 0;
 		return true;
 	}
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_2) {
-        if (morph != 1){
-            old_morph = morph;
-            justChanged = true;
-        }
+        if (morph != 1) old_morph = morph;
 		morph = 1;
 		return true;
 	}
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_3) {
-        if (morph != 2) {
-            old_morph = morph;
-            justChanged = true;
-        }
+        if (morph != 2) old_morph = morph;
         morph = 2; 
         return true; 
     }
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_4) {
-        if (morph != 3) {
-            old_morph = morph;
-            justChanged = true;
-        }
+        if (morph != 3) old_morph = morph;
         morph = 3; 
         return true; 
     }
@@ -279,88 +258,12 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         }
         return true;
     }
-
-
 	return false;
 }
 
 void WormMode::update(float elapsed) {
-    // TODO: remove ifs 
-    if (justChanged){
-        if (morph == 0) {
-            if (old_morph == 1) worm->transform->position = player.transform->position;
-            if (old_morph == 2) worm->transform->position = rectangle.character_transform->position;
-            if (old_morph == 3) worm->transform->position = blob.character_transform->position;
-            catball.character_transform->position = character_off_pos;
-            rectangle.character_transform->position = character_off_pos;
-            blob.character_transform->position = character_off_pos;
-        }
-        else if (morph == 1) {
-            if (old_morph == 0) catball.character_transform->position = worm->transform->position;
-            if (old_morph == 2) catball.character_transform->position = rectangle.character_transform->position;
-            if (old_morph == 3) catball.character_transform->position = blob.character_transform->position;
-            // player.transform->position = worm->transform->position;
-            player.transform->position = catball.character_transform->position;
-            worm->transform->position = character_off_pos;
-            rectangle.character_transform->position = character_off_pos;
-            blob.character_transform->position = character_off_pos;
-            player.at = walkmesh->nearest_walk_point(player.transform->position);
-        }
-        else if (morph == 2) {
-            std::cout << "old " << old_morph << std::endl; 
-            if (old_morph == 0) rectangle.character_transform->position = worm->transform->position;
-            if (old_morph == 1) rectangle.character_transform->position = catball.character_transform->position;
-            if (old_morph == 3) rectangle.character_transform->position = blob.character_transform->position;
-            player.transform->position = rectangle.character_transform->position;
-            worm->transform->position = character_off_pos;
-            catball.character_transform->position = character_off_pos;
-            blob.character_transform->position = character_off_pos;
-            player.at = walkmesh->nearest_walk_point(player.transform->position);
-
-            // // Get position of current player
-            // glm::vec3 character_pos; 
-            // Character old_ch = game_characters[old_morph];
-            // if (old_ch.ctype) {
-            //     character_pos = old_ch.character_transform->position;
-            // } else {
-            //     character_pos = old_ch.character_animate->transform->position;
-            // }
-
-            // // Update position of new character and player
-            // Character new_ch = game_characters[morph];
-            // if (new_ch.ctype) {
-            //     new_ch.character_transform->position = character_pos;
-            // } else {
-            //     // new_ch.character_animate->transform->position = character_pos;
-            //     new_ch.character_animate->transform->position = player.transform->position;
-            // }
-            // player.transform->position = character_pos;
-        }
-        else if (morph == 3) {
-            if (old_morph == 0) blob.character_transform->position = worm->transform->position;
-            if (old_morph == 1) blob.character_transform->position = catball.character_transform->position;
-            if (old_morph == 2) blob.character_transform->position = rectangle.character_transform->position;
-            blob.character_transform->position.z = 0.7f;
-            // player.transform->position = blob.character_transform->position;
-            worm->transform->position = character_off_pos;
-            catball.character_transform->position = character_off_pos;
-            rectangle.character_transform->position = character_off_pos;
-            // player.at = walkmesh->nearest_walk_point(player.transform->position);
-        }
-        justChanged = false;
-        // // Move all morphs (characters) offscreen
-        // for (auto &characters : game_characters) {
-        //     int ch_num = characters.first;
-        //     Character &ch = characters.second; 
-        //     if (ch_num != morph) {
-        //         if (ch.ctype) {
-        //             ch.character_transform->position = character_off_pos;
-        //         } else {
-        //             ch.character_animate->transform->position = character_off_pos;
-        //         } 
-        //     }
-        // }
-    }
+    // Change character if input provided 
+    this->morphCharacter(false); 
 
     glm::vec3 move = glm::vec3(0.0f);
     if (morph == 0) {
@@ -403,13 +306,13 @@ void WormMode::update(float elapsed) {
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
                     
                 } else {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
                     move.z = 1.0f;
                 }
             }
@@ -419,13 +322,13 @@ void WormMode::update(float elapsed) {
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
                     
                 } else {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
                     move.z = 1.0f;
                 }
             }
@@ -435,13 +338,13 @@ void WormMode::update(float elapsed) {
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
-                    rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
                     
                 } else {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
                     move.z = 1.0f;
                 }
             }
@@ -451,13 +354,13 @@ void WormMode::update(float elapsed) {
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
-                    rectangle.character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
                     
                 } else {
-                    rectangle.character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].character_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
                     move.z = 1.0f;
                 }
             }
@@ -532,21 +435,37 @@ void WormMode::update(float elapsed) {
 
     {
 		// update character mesh's position to respect walking
-		// catball.character_transform->position = player.transform->position;
-        if (morph == 0){
-            worm->transform->position.y += move.y;
-            worm->transform->position.x += move.x;
+		// catball.ch_transform->position = player.transform->position;
+        if (morph == 0) {
+            // worm->transform->position.y += move.y;
+            // worm->transform->position.x += move.x;
 
-            player.transform->position = worm->transform->position;
+            // player.transform->position = worm->transform->position;
 
-            camera->transform->position = worm->transform->position + camera_offset_pos;
+            // camera->transform->position = worm->transform->position + camera_offset_pos;
+            // camera->transform->rotation = camera_offset_rot;
+
+            // float angle = (move.x*60.0f);
+            // worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            // if (!move.x && (worm->transform->rotation.w != -worm->transform->rotation.y)) {
+            //     worm->transform->rotation = startingRotation;
+            // }
+
+            worm.ch_animate->transform->position.y += move.y;
+            worm.ch_animate->transform->position.x += move.x;
+
+            player.transform->position = worm.ch_animate->transform->position;
+
+            camera->transform->position = worm.ch_animate->transform->position + camera_offset_pos;
             camera->transform->rotation = camera_offset_rot;
 
             float angle = (move.x*60.0f);
-            worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+            worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            if (!move.x && (worm->transform->rotation.w != -worm->transform->rotation.y)) {
-                worm->transform->rotation = startingRotation;
+            if (!move.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
+                worm.ch_animate->transform->rotation = worm.wstarting_rotation;
+
             }
 
             worm_animations[0].position += move.y *0.8f;
@@ -557,10 +476,10 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            catball.character_transform->position.y += move.y;
-            catball.character_transform->position.x += move.x;
+            catball.ch_transform->position.y += move.y;
+            catball.ch_transform->position.x += move.x;
             
-            player.transform->position = catball.character_transform->position;
+            player.transform->position = catball.ch_transform->position;
 
             camera->transform->position = player.transform->position + camera_offset_pos;
             camera->transform->rotation = camera_offset_rot;
@@ -568,7 +487,7 @@ void WormMode::update(float elapsed) {
             // //update player's position to respect walking:
 		    // player.transform->position = walkmesh->to_world_point(player.at);
 
-            // catball.character_transform->position = walkmesh->to_world_point(player.at);
+            // catball.ch_transform->position = walkmesh->to_world_point(player.at);
             
             // camera->transform->position = player.transform->position + camera_offset_pos;
             // camera->transform->rotation = camera_offset_rot;
@@ -576,38 +495,38 @@ void WormMode::update(float elapsed) {
         if (morph == 2) {
             move.x *= elapsed;
             move.y *= elapsed;
-            rectangle.character_transform->position.y += move.y;
-            rectangle.character_transform->position.x += move.x;
+            rectangle.ch_transform->position.y += move.y;
+            rectangle.ch_transform->position.x += move.x;
             
-            player.transform->position = rectangle.character_transform->position;
+            player.transform->position = rectangle.ch_transform->position;
 
             camera->transform->position = player.transform->position + camera_offset_pos;
             camera->transform->rotation = camera_offset_rot;
 
             flipped += 1;
         }
-        if (morph == 3){
-            blob.character_transform->position.y += move.y;
-            blob.character_transform->position.x += move.x;
+        if (morph == 3) {
+            blob.ch_transform->position.y += move.y;
+            blob.ch_transform->position.x += move.x;
 
             if (justFlipped) {
-                blob.character_transform->position.z *= -1;
-                blob.character_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-                blob.character_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                blob.ch_transform->position.z *= -1;
+                blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                 
                 camera_offset_pos.z *= -1;
                 camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
                 justFlipped = false;
             }
 
-            player.transform->position = blob.character_transform->position;
+            player.transform->position = blob.ch_transform->position;
 
-            camera->transform->position = blob.character_transform->position + camera_offset_pos;
+            camera->transform->position = blob.ch_transform->position + camera_offset_pos;
             camera->transform->rotation = camera_offset_rot;
         }
     }
 
-    new_worm.character_animate = worm;
+    // worm.ch_animate = worm;
 }
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
@@ -634,15 +553,16 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 
 	scene.draw(*camera);
 
-    // {
-	// 	glDisable(GL_DEPTH_TEST);
-	// 	DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
-	// 	for (auto const &tri : walkmesh->triangles) {
-	// 		lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-	// 		lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-	// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-	// 	}
-	// }
+    // Walkmesh 
+    {
+		glDisable(GL_DEPTH_TEST);
+		DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
+		for (auto const &tri : walkmesh->triangles) {
+			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		}
+	}
 
     { //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
@@ -667,4 +587,39 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	}
 
 	GL_ERRORS();
+}
+
+void WormMode::morphCharacter(bool forced) {
+    if (old_morph != morph || forced) { 
+        // Get position of previous active character
+        glm::vec3 pos; 
+        Character old_ch = game_characters[old_morph];
+        Character new_ch = game_characters[morph];
+        if (old_ch.ctype) {
+            pos = old_ch.ch_transform->position; 
+        } else {
+            pos = old_ch.ch_animate->transform->position; 
+        }
+        
+        // Update position of new character
+        if (new_ch.ctype) {
+            new_ch.ch_transform->position = pos; 
+        } else { 
+            new_ch.ch_animate->transform->position = pos; 
+        }
+
+        // Move all morphs (characters) offscreen
+        for (auto &character : game_characters) {
+            int ch_num = character.first;
+            Character &ch = character.second; 
+            if (ch_num != morph) {
+                if (ch.ctype) {
+                    ch.ch_transform->position = character_off_pos;
+                } else {
+                    ch.ch_animate->transform->position = character_off_pos;
+                } 
+            }
+        }
+        old_morph = morph;
+    }
 }
