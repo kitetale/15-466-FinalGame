@@ -35,18 +35,18 @@ struct WormMode : public Mode {
 	float camera_radius = 10.0f;
 	float camera_azimuth = glm::radians(60.0f);
 	float camera_elevation = glm::radians(45.0f);
-	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -20.0f, 7.0f);
-	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::vec3 character_off_pos = glm::vec3(0.0f, -20.0f, 0.0f);
+	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
+	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
 
 	// Scene:
 	Scene scene;
 
 	// In-game attributes: 
-	glm::vec3 start_pos = glm::vec3(2.0f,1.0f,0.0f);
+	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
 
-	uint8_t morph = 0; // 0 is worm, 1 is cat sphere, 2 is rectangle
-	uint8_t old_morph = 0; // For changing between two characters
+	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
+	int old_morph = 1; // For changing between two characters
 
     //goal to reach
 	Scene::Transform *goal = nullptr;

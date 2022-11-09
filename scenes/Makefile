@@ -18,29 +18,20 @@ EXPORT_ANIMATION=export-bone-animations.py
 DIST=../dist
 
 all : \
-	$(DIST)/worm.pnct \
-	$(DIST)/worm.banims \
-	$(DIST)/worm.w \
-	$(DIST)/worm.scene 
+	$(DIST)/level.pnct \
+	$(DIST)/level.banims \
+	$(DIST)/level.w \
+	$(DIST)/level.scene 
 
 
-$(DIST)/worm.pnct : worm.blend $(EXPORT_MESHES)
-	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
+$(DIST)/level.pnct : level.blend $(EXPORT_MESHES)
+	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platform '$@'
 
-$(DIST)/worm.banims : worm.blend $(EXPORT_ANIMATION)
+$(DIST)/level.banims : level.blend $(EXPORT_ANIMATION)
 	$(BLENDER) --background --python $(EXPORT_ANIMATION) -- '$<' 'Armature' '[0,30]Crawl' '$@'
 
-$(DIST)/worm.w : worm.blend $(EXPORT_WALKMESHES)
+$(DIST)/level.w : level.blend $(EXPORT_WALKMESHES)
 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
 
-$(DIST)/worm.scene : worm.blend $(EXPORT_SCENE)
-	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
-
-# $(DIST)/proto.pnct : proto.blend $(EXPORT_MESHES)
-# 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
-
-# $(DIST)/proto.scene : proto.blend $(EXPORT_SCENE)
-# 	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
-
-# $(DIST)/proto.w : proto.blend $(EXPORT_WALKMESHES)
-# 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
+$(DIST)/level.scene : level.blend $(EXPORT_SCENE)
+	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platform '$@'
