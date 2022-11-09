@@ -200,7 +200,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
     }
 
     // movements
-	if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_UP) {
+	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_w) {
 		forward = true;
         if (morph == 0) {
             left = false;
@@ -209,11 +209,11 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         // if (morph == 2) flipped = true;
 		return true;
 	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_UP) {
+	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_w) {
 		forward = false;
 		return true;
 	}
-	if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_s) {
 		backward = true;
         if (morph == 0) {
             left = false;
@@ -222,25 +222,25 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         // if (morph == 2) flipped = true;
 		return true;
 	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_s) {
 		backward = false;
 		return true;
 	}
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_a) {
 		left = true;
         // if (morph == 2) flipped = true;
 		return true;
 	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_a) {
 		left = false;
 		return true;
 	}
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_d) {
 		right = true;
         // if (morph == 2) flipped = true;
 		return true;
 	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_d) {
 		right = false;
 		return true;
 	}
@@ -273,31 +273,6 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
                     ch.ch_transform->rotation = glm::angleAxis(-motion.x *camera->fovy, upDir) * ch.ch_transform->rotation;
                 }
             }
-            //camera->transform->rotation = player.transform->rotation * camera_offset_rot;
-
-			// float pitch = glm::pitch(camera->transform->rotation);
-			// pitch += motion.y * camera->fovy;
-			// //camera looks down -z (basically at the player's feet) when pitch is at zero.
-			// pitch = std::min(pitch, 0.95f * 3.1415926f);
-			// pitch = std::max(pitch, 0.05f * 3.1415926f);
-			// camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-            {/*
-			glm::vec2 motion = glm::vec2(
-				evt.motion.xrel / float(window_size.y),
-				-evt.motion.yrel / float(window_size.y)
-			);
-			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
-            camera->transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation * glm::angleAxis(glm::radians(50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
-            // update yaw of character so that it's always facing front
-            // for (auto &character : game_characters) {
-            //     if (character.first == morph) {
-            //         Character &ch = character.second;
-            //         ch.ch_transform->rotation = glm::angleAxis(-motion.x *camera->fovy, upDir) * ch.ch_transform->rotation;
-            //     }
-            // }   
-            */}
 			return true;
 		}
     }
@@ -482,6 +457,7 @@ void WormMode::update(float elapsed) {
 
     {
 		// update character mesh's position to respect walking
+        glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 		// catball.ch_transform->position = player.transform->position;
         if (morph == 0) {
             // worm->transform->position.y += move.y;
@@ -499,23 +475,20 @@ void WormMode::update(float elapsed) {
             //     worm->transform->rotation = startingRotation;
             // }
 
-            worm.ch_animate->transform->position.y += move.y;
-            worm.ch_animate->transform->position.x += move.x;
+            worm.ch_animate->transform->position.y += remain.y;
+            worm.ch_animate->transform->position.x += remain.x;
 
             player.transform->position = worm.ch_animate->transform->position;
 
-            camera->transform->position = worm.ch_animate->transform->position + camera_offset_pos;
-            camera->transform->rotation = player.transform->rotation * camera_offset_rot;
-
-            float angle = (move.x*60.0f);
+            float angle = (remain.x*60.0f);
             worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            if (!move.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
+            if (!remain.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
                 worm.ch_animate->transform->rotation = worm.wstarting_rotation;
 
             }
 
-            worm_animations[0].position += move.y *0.8f;
+            worm_animations[0].position += remain.y *0.8f;
             worm_animations[0].position -= std::floor(worm_animations[0].position);
 
             for (auto &anim : worm_animations) {
@@ -523,33 +496,25 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            glm::vec3 remain =catball.ch_transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-
             catball.ch_transform->position.y += remain.y;
             catball.ch_transform->position.x += remain.x;
             
             player.transform->position = catball.ch_transform->position;
 
-            camera->transform->rotation = player.transform->rotation * camera_offset_rot;
-            camera->transform->position = (player.transform->position + (player.transform->rotation *camera_offset_pos));
-
         }
         if (morph == 2) {
-            move.x *= elapsed;
-            move.y *= elapsed;
-            rectangle.ch_transform->position.y += move.y;
-            rectangle.ch_transform->position.x += move.x;
+            remain.x *= elapsed;
+            remain.y *= elapsed;
+            rectangle.ch_transform->position.y += remain.y;
+            rectangle.ch_transform->position.x += remain.x;
             
             player.transform->position = rectangle.ch_transform->position;
-
-            camera->transform->position = player.transform->position + camera_offset_pos;
-            camera->transform->rotation = player.transform->rotation * camera_offset_rot;
 
             flipped += 1;
         }
         if (morph == 3) {
-            blob.ch_transform->position.y += move.y;
-            blob.ch_transform->position.x += move.x;
+            blob.ch_transform->position.y += remain.y;
+            blob.ch_transform->position.x += remain.x;
 
             if (justFlipped) {
                 blob.ch_transform->position.z *= -1;
@@ -562,18 +527,11 @@ void WormMode::update(float elapsed) {
             }
 
             player.transform->position = blob.ch_transform->position;
-
-            camera->transform->rotation = player.transform->rotation * camera_offset_rot;
-            camera->transform->position = blob.ch_transform->position + camera_offset_pos;
         }
 
-        //update player's rotation to respect local (smooth) up-vector:
-			
-        glm::quat adjust = glm::rotation(
-            player.transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
-            walkmesh->to_world_smooth_normal(player.at) //smoothed up vector at walk location
-        );
-        player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
+        // update camera location and rotation
+        camera->transform->rotation = player.transform->rotation * camera_offset_rot;
+        camera->transform->position = (player.transform->position + (player.transform->rotation *camera_offset_pos));
 
     }
 
@@ -625,12 +583,12 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		lines.draw_text("Arrows moves; Space for specialty, NumKeys Morphs",
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs",
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Arrows moves; Space for specialty, NumKeys Morphs",
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs",
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
