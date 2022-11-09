@@ -62,7 +62,7 @@ Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
 	});
 });
 
-// *************************** WALKMESH ************************
+// *************************** WALK MESH ***********************
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	// WalkMeshes *ret = new WalkMeshes(data_path("worm.w"));
@@ -325,7 +325,7 @@ void WormMode::update(float elapsed) {
             move.x =-2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (game_characters[2].rtall_side) {
+                if (isTallSide) {
                     rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
@@ -341,7 +341,7 @@ void WormMode::update(float elapsed) {
             move.x = 2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (game_characters[2].rtall_side) {
+                if (isTallSide) {
                     rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
@@ -357,7 +357,7 @@ void WormMode::update(float elapsed) {
             move.y =-2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (game_characters[2].rtall_side) {
+                if (isTallSide) {
                     rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
@@ -373,7 +373,7 @@ void WormMode::update(float elapsed) {
             move.y = 2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (game_characters[2].rtall_side) {
+                if (isTallSide) {
                     rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
@@ -386,8 +386,8 @@ void WormMode::update(float elapsed) {
             }
         }
 
-        game_characters[2].rtall_side = !game_characters[2].rtall_side;
-        // game_characters[2].game_characters[2].rtall_side = !game_characters[2].game_characters[2].rtall_side;
+        isTallSide = !isTallSide;
+        game_characters[2].isTallSide = !game_characters[2].isTallSide;
     } else if (morph == 3) {
         float PlayerSpeed = 12.0f;
 
