@@ -62,7 +62,7 @@ Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
 	});
 });
 
-// *************************** WALK MESH ***********************
+// *************************** WALKMESH ************************
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	// WalkMeshes *ret = new WalkMeshes(data_path("worm.w"));
@@ -305,7 +305,7 @@ void WormMode::update(float elapsed) {
             move.x =-2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (isTallSide) {
+                if (game_characters[2].rtall_side) {
                     rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
@@ -321,7 +321,7 @@ void WormMode::update(float elapsed) {
             move.x = 2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (isTallSide) {
+                if (game_characters[2].rtall_side) {
                     rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
                     move.z = -1.0f;
@@ -337,7 +337,7 @@ void WormMode::update(float elapsed) {
             move.y =-2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (isTallSide) {
+                if (game_characters[2].rtall_side) {
                     rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
@@ -353,7 +353,7 @@ void WormMode::update(float elapsed) {
             move.y = 2.0f;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
-                if (isTallSide) {
+                if (game_characters[2].rtall_side) {
                     rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
                     move.z = -1.0f;
@@ -366,8 +366,8 @@ void WormMode::update(float elapsed) {
             }
         }
 
-        isTallSide = !isTallSide;
-        game_characters[2].isTallSide = !game_characters[2].isTallSide;
+        game_characters[2].rtall_side = !game_characters[2].rtall_side;
+        // game_characters[2].game_characters[2].rtall_side = !game_characters[2].game_characters[2].rtall_side;
     } else if (morph == 3) {
         float PlayerSpeed = 12.0f;
 
@@ -382,60 +382,59 @@ void WormMode::update(float elapsed) {
     }
 
 
-    // if (morph == 1 || morph == 2) {
-    //     //get move in world coordinate system:
-	// 	glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
-    //     //using a for() instead of a while() here so that if walkpoint gets stuck in
-	// 	// some awkward case, code will not infinite loop:
-	// 	for (uint32_t iter = 0; iter < 10; ++iter) {
-	// 		if (remain == glm::vec3(0.0f)) break;
-	// 		WalkPoint end;
-	// 		float time;
-	// 		walkmesh->walk_in_triangle(player.at, remain, &end, &time);
-	// 		player.at = end;
-	// 		if (time == 1.0f) {
-	// 			//finished within triangle:
-	// 			remain = glm::vec3(0.0f);
-	// 			break;
-	// 		}
-	// 		//some step remains:
-	// 		remain *= (1.0f - time);
-	// 		//try to step over edge:
-	// 		glm::quat rotation;
-	// 		if (walkmesh->cross_edge(player.at, &end, &rotation)) {
-	// 			//stepped to a new triangle:
-	// 			player.at = end;
-	// 			//rotate step to follow surface:
-	// 			remain = rotation * remain;
-	// 		} else {
-	// 			//ran into a wall, bounce / slide along it:
-	// 			glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-	// 			glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-	// 			glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
-	// 			glm::vec3 along = glm::normalize(b-a);
-	// 			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-	// 			glm::vec3 in = glm::cross(normal, along);
+    if (morph == 1 || morph == 2) {
+        //get move in world coordinate system:
+		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
+        //using a for() instead of a while() here so that if walkpoint gets stuck in
+		// some awkward case, code will not infinite loop:
+		for (uint32_t iter = 0; iter < 10; ++iter) {
+			if (remain == glm::vec3(0.0f)) break;
+			WalkPoint end;
+			float time;
+			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
+			player.at = end;
+			if (time == 1.0f) {
+				//finished within triangle:
+				remain = glm::vec3(0.0f);
+				break;
+			}
+			//some step remains:
+			remain *= (1.0f - time);
+			//try to step over edge:
+			glm::quat rotation;
+			if (walkmesh->cross_edge(player.at, &end, &rotation)) {
+				//stepped to a new triangle:
+				player.at = end;
+				//rotate step to follow surface:
+				remain = rotation * remain;
+			} else {
+				//ran into a wall, bounce / slide along it:
+				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 along = glm::normalize(b-a);
+				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+				glm::vec3 in = glm::cross(normal, along);
 
-	// 			//check how much 'remain' is pointing out of the triangle:
-	// 			float d = glm::dot(remain, in);
-	// 			if (d < 0.0f) {
-	// 				//bounce off of the wall:
-	// 				remain += (-1.25f * d) * in;
-	// 			} else {
-	// 				//if it's just pointing along the edge, bend slightly away from wall:
-	// 				remain += 0.01f * d * in;
-	// 			}
-	// 		}
-	// 	}
+				//check how much 'remain' is pointing out of the triangle:
+				float d = glm::dot(remain, in);
+				if (d < 0.0f) {
+					//bounce off of the wall:
+					remain += (-1.25f * d) * in;
+				} else {
+					//if it's just pointing along the edge, bend slightly away from wall:
+					remain += 0.01f * d * in;
+				}
+			}
+		}
 
-	// 	if (remain != glm::vec3(0.0f)) {
-	// 		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-	// 	}
-    // }
+		if (remain != glm::vec3(0.0f)) {
+			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+		}
+    }
 
     {
 		// update character mesh's position to respect walking
-		// catball.ch_transform->position = player.transform->position;
         if (morph == 0) {
             // worm->transform->position.y += move.y;
             // worm->transform->position.x += move.x;
@@ -476,9 +475,8 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            catball.ch_transform->position.y += move.y;
             catball.ch_transform->position.x += move.x;
-            
+            catball.ch_transform->position.y += move.y;            
             player.transform->position = catball.ch_transform->position;
 
             camera->transform->position = player.transform->position + camera_offset_pos;

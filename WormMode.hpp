@@ -45,7 +45,7 @@ struct WormMode : public Mode {
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(2.0f,1.0f,0.0f);
 
-	uint8_t morph = 0; // 0 is worm, 1 is cat sphere, 2 is rectangle
+	uint8_t morph = 0; // 0 is worm, 1 is cat sphere, 2 is rectangle, 3 is blob 
 	uint8_t old_morph = 0; // For changing between two characters
 
     //goal to reach
@@ -65,8 +65,8 @@ struct WormMode : public Mode {
 		Scene::Transform *ch_transform = nullptr; // all 'standard' assets
 		Scene::Drawable *ch_animate = nullptr; // all animated assets i.e. worm 
 		bool ctype = true; // true if standard false if animated
-		glm::quat wstarting_rotation; 
-		bool isTallSide = true; // rectangle only 
+		glm::quat wstarting_rotation; // worm only
+		bool rtall_side = true; // rectangle only 
 		int64_t count = 0; // rectangle only
 	} worm, catball, rectangle, blob;
 	std::unordered_map<int, Character> game_characters; 
@@ -74,15 +74,10 @@ struct WormMode : public Mode {
 	// 0: worm animations 
 	std::vector< BoneAnimationPlayer > worm_animations;
 
-	// 2: rectangle only
-	bool isTallSide = true; 
 	// int flipped = false;
-
 	bool justFlipped = false; // for morph 2 flipping scene
 	bool isFlipped = false; // for morph 2 flipping scene
 
 	// In-game events: 
 	void morphCharacter(bool forced); // Change character
-
-
 };
