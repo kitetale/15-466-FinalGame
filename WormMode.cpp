@@ -318,7 +318,12 @@ void WormMode::update(float elapsed) {
         move.y = step;
     }
     else if (morph == 1) {
-        float PlayerSpeed = 4.0f;
+        float PlayerSpeed = 4.0f * accel;
+        if (jumpDir == 1.0f) {
+            accel *= 0.98f;
+        } else {
+            accel *= 1.05f;
+        }
 
         if (left && !right) move.x =-1.0f;
 		if (!left && right) move.x = 1.0f;
@@ -327,6 +332,10 @@ void WormMode::update(float elapsed) {
 
 		//make it so that moving diagonally doesn't go faster:
 		if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+
+        if (!isFlipped) {
+            move.z += PlayerSpeed * elapsed * jumpDir;
+        }
     } else if (morph == 2 && flipped < 1) {
         if (left && !right) {
             move.x =-2.0f;
@@ -464,7 +473,7 @@ void WormMode::update(float elapsed) {
 
     {
 		// update character mesh's position to respect walking
-        glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+        glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
 		// catball.ch_transform->position = player.transform->position;
         if (morph == 0) {
             // worm->transform->position.y += move.y;
@@ -505,7 +514,23 @@ void WormMode::update(float elapsed) {
         if (morph == 1) {
             catball.ch_transform->position.y += remain.y;
             catball.ch_transform->position.x += remain.x;
-            
+
+            catball.ch_transform->position.z += remain.z;
+            if (catball.ch_transform->position.z > jumpDist.at(jumpNum) + floorZ) {
+                float extra = catball.ch_transform->position.z - (jumpDist.at(jumpNum) + floorZ);
+                catball.ch_transform->position.z = (jumpDist.at(jumpNum) + floorZ) - extra;
+                jumpDir = -1.0f;
+            }
+            if (catball.ch_transform->position.z < floorZ) {
+                float extra = floorZ - catball.ch_transform->position.z;
+                catball.ch_transform->position.z = floorZ + extra;
+                jumpDir = 1.0f;
+                jumpNum = (jumpNum + 1) % 4;
+                if (jumpNum == 0) {
+                    accel = 1.0f;
+                }
+            }
+
             player.transform->position = catball.ch_transform->position;
 
         }
@@ -613,9 +638,10 @@ void WormMode::morphCharacter(bool forced) {
         Character old_ch = game_characters[old_morph];
         Character new_ch = game_characters[morph];
         if (old_ch.ctype) {
-            pos = old_ch.ch_transform->position; 
+            pos = old_ch.ch_transform->position;
+            pos.z = 0.0f;
         } else {
-            pos = old_ch.ch_animate->transform->position; 
+            pos = old_ch.ch_animate->transform->position;
         }
         
         // Update position of new character
