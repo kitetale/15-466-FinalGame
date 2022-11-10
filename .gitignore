@@ -16,3 +16,4 @@ dist/freetype-test*
 scenes/show-meshes*
 scenes/show-scene*
 *.blend[0-9]
+.vscode/tasks.json
