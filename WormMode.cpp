@@ -87,7 +87,7 @@ WormMode::WormMode() : scene(*worm_scene) {
             if (transform.name.substr(0, transform.name.size()-1) == "bead") {
                 beads.push_back(&transform);
             }
-            if (transform.name.substr(0, 4) == "")
+            // if (transform.name.substr(0, 4) == "")
         }
 
         // Bead count 

@@ -91,9 +91,5 @@ struct WormMode : public Mode {
 
 	// Lives and collisions 
 	uint8_t num_lives = 3; 
-	std::vector < Scene::Transform* > objects; 
-
-
-	
-
+	std::vector < Scene::Transform* > obstacles;
 };
