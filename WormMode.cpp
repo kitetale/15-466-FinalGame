@@ -87,6 +87,7 @@ WormMode::WormMode() : scene(*worm_scene) {
             if (transform.name.substr(0, transform.name.size()-1) == "bead") {
                 beads.push_back(&transform);
             }
+            if (transform.name.substr(0, 4) == "")
         }
 
         // Bead count 
@@ -589,6 +590,7 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
 
+        // TODO: add num bead counts in a better format 
 		constexpr float H = 0.09f;
 		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs                            beads remaining: " + std::to_string(num_beads),
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
@@ -599,11 +601,6 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
-
-        // lines.draw_text(std::to_string((int) num_beads) + " beads remaining",
-		// 	glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
-		// 	glm::vec3(200+H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-		// 	glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
 
 	GL_ERRORS();
@@ -657,7 +654,7 @@ void WormMode::beadCollision(float eps) {
         threshold = 6.5f + eps; 
     }
 
-    for (int i = 0; i < beads.size(); i++) { 
+    for (size_t i = 0; i < beads.size(); i++) { 
         auto bead = beads[i];
         if (!bead->include) continue;
         glm::vec3 bead_pos = bead->position; 
