@@ -27,6 +27,9 @@ struct Scene {
 		//Transform names are useful for debugging and looking up locations in a loaded scene:
 		std::string name;
 
+		// Bool to indicate whether or not to draw transform
+		bool include = true; 
+
 		//The core function of a transform is to store a transformation in the world:
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); //n.b. wxyz init order

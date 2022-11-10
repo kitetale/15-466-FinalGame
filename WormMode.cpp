@@ -84,7 +84,13 @@ WormMode::WormMode() : scene(*worm_scene) {
             if (transform.name == "Catball") catball.ch_transform = &transform;
             if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
             if (transform.name == "Blob") blob.ch_transform = &transform;
+            if (transform.name.substr(0, transform.name.size()-1) == "bead") {
+                beads.push_back(&transform);
+            }
         }
+
+        // Bead count 
+        num_beads = beads.size();
 
         //create a player camera attached to a child of the player transform:
         scene.transforms.emplace_back();
@@ -532,9 +538,10 @@ void WormMode::update(float elapsed) {
         // update camera location and rotation
         camera->transform->rotation = player.transform->rotation * camera_offset_rot;
         camera->transform->position = (player.transform->position + (player.transform->rotation *camera_offset_pos));
-
     }
-
+    
+    // Check for collision with beads
+    beadCollision(0.1f);
 }
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
@@ -561,16 +568,16 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 
 	scene.draw(*camera);
 
-    // Walkmesh 
-    {
-		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
-		for (auto const &tri : walkmesh->triangles) {
-			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-		}
-	}
+    // // Walkmesh 
+    // {
+	// 	glDisable(GL_DEPTH_TEST);
+	// 	DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
+	// 	for (auto const &tri : walkmesh->triangles) {
+	// 		lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 	}
+	// }
 
     { //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
@@ -583,15 +590,20 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs",
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs                            beads remaining: " + std::to_string(num_beads),
 			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
 		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs",
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs                            beads remaining: " + std::to_string(num_beads),
 			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+
+        // lines.draw_text(std::to_string((int) num_beads) + " beads remaining",
+		// 	glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+		// 	glm::vec3(200+H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+		// 	glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
 
 	GL_ERRORS();
@@ -629,5 +641,36 @@ void WormMode::morphCharacter(bool forced) {
             }
         }
         old_morph = morph;
+    }
+}
+
+void WormMode::beadCollision(float eps) { 
+    Character ch = game_characters[morph];
+    glm::vec3 ch_pos;
+    float threshold; 
+    if (ch.ctype) {
+        ch_pos = ch.ch_transform->position; 
+        threshold = 2+eps;
+    }
+    else {
+        ch_pos = ch.ch_animate->transform->position; 
+        threshold = 6.5f + eps; 
+    }
+
+    for (int i = 0; i < beads.size(); i++) { 
+        auto bead = beads[i];
+        if (!bead->include) continue;
+        glm::vec3 bead_pos = bead->position; 
+        glm::vec3 pos_diff = ch_pos - bead_pos;
+        if (abs(glm::dot(pos_diff,pos_diff)) <= threshold) {
+            bead->include = false;
+            num_beads -= 1;
+            break;
+        }
+        // TODO: update to make winning more glamorous 
+        if (num_beads == 0) {
+            std::cout << "YOU WIN\n";
+            exit(0);
+        }        
     }
 }
