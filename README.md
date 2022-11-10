@@ -20,6 +20,7 @@ Sources:
 * [fox](https://sketchfab.com/3d-models/fox-8f4967b2860044279457fa2465f59f76)
 * [rocks](https://sketchfab.com/3d-models/rocks-low-poly-starter-pack-2a362c908b1047539b1f4f5d78d30b4e)
 * [fence](https://sketchfab.com/3d-models/fence-b5a3d0b102ee43498c87bf80db94bc3e#download)
+* [wood sign](https://sketchfab.com/3d-models/wooden-sign-low-poly-923ce9265cf244558ffa3b8c127d8111)
 
 This game was built with [NEST](NEST.md).
 
