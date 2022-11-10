@@ -81,8 +81,15 @@ struct WormMode : public Mode {
 	bool justFlipped = false; // for morph 2 flipping scene
 	bool isFlipped = false; // for morph 2 flipping scene
 
-	// In-game events: 
+	// In-game attributes: 
 	void morphCharacter(bool forced); // Change character
+	void beadCollision(float eps); // Check for collision with beads
+	
+	// Beads - goal of the game 
+	std::vector< Scene::Transform* > beads;
+	size_t num_beads; 
 
-
+	// Lives and collisions 
+	uint8_t num_lives = 3; 
+	std::vector < Scene::Transform* > obstacles;
 };
