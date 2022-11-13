@@ -61,7 +61,8 @@ struct WalkMesh {
 	bool cross_edge(
 		WalkPoint const &start, //[in] walkpoint on triangle edge
 		WalkPoint *end,         //[out] end walkpoint, having crossed edge
-		glm::quat *rotation     //[out] rotation over edge
+		glm::quat *rotation,    //[out] rotation over edge
+		int morph           //Character type in-game
 	) const;
 
 	//used to read back results of walking:

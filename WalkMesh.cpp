@@ -143,27 +143,8 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	glm::vec3 p = start.weights.x * a + start.weights.y * b + start.weights.z * c;
 	glm::vec3 pStep = p + step;
 
-
 	// Compute barycentric weights of pStep
 	glm::vec3 newWeights = barycentric_weights(a, b, c, pStep);
-	// glm::vec3 n = glm::normalize(glm::cross(b - a, c - a));
-	// glm::vec3 v = pStep - a;
-	// float dist = glm::dot(v, n);
-	// glm::vec3 projPt = pStep - (dist * n);
-
-	// // Compute weights
-	// n = glm::cross(b - a, c - a);
-	// glm::vec3 n1 = glm::cross(c - b, projPt - b);
-	// glm::vec3 n2 = glm::cross(a - c, projPt - c);
-	// glm::vec3 n3 = glm::cross(b - a, projPt - a);
-
-	// float norm2 = glm::length(n) * glm::length(n);
-
-	// float w1 = glm::dot(n, n1) / norm2;
-	// float w2 = glm::dot(n, n2) / norm2;
-	// float w3 = glm::dot(n, n3) / norm2;
-
-	// glm::vec3 newWeights = glm::vec3(w1, w2, w3);
 
 	// Report final point 
 	glm::vec3 weightDiff = start.weights - newWeights;
@@ -200,7 +181,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	// // then wp.weights.z == 0.0f (so will likely need to re-order the indices)
 }
 
-bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
+bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_, int morph) const {
 	assert(end_);
 	auto &end = *end_;
 
@@ -217,14 +198,9 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		glm::vec3 vn = glm::vec3(start.indices.z, start.indices.x, start.indices.y);
 		glm::vec3 wn = glm::vec3(start.weights.z, start.weights.x, start.weights.y);
 		const WalkPoint start1 = WalkPoint(vn, wn);
-		return this->cross_edge(start1, end_, rotation_);
+		return this->cross_edge(start1, end_, rotation_, morph);
 	}
-	// } else if (start.weights.y == 0) { 
-	// 	glm::vec3 wn = glm::vec3(start.weights.z, start.weights.x, 0.f);
-	// 	const WalkPoint start1 =  WalkPoint(start.indices, wn);
-	// 	return this->cross_edge(start1, end_, rotation_);
-	// }
-	// std::cout << start.weights.x << " " << start.weights.y << " " << start.weights.z << "\n";
+	
 	assert(start.weights.z == 0.0f); //*must* be on an edge.
 
 	//TODO: check if edge (start.indices.x, start.indices.y) has a triangle on the other side:
@@ -233,8 +209,15 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	auto f = next_vertex.find(fEdge);
 	if (f == next_vertex.end()) return false;
 
-	//TODO: if there is another triangle:
-	//  TODO: set end's weights and indicies on that triangle:
+	// For non-rectangle characters check if not going up 
+	if (morph != 2) {
+		glm::vec3 vertex1 = vertices[start.indices.z];
+		glm::vec3 vertex2 = vertices[f->second]; 
+		if (vertex1.z != vertex2.z) return false;
+	}
+
+	// TODO: if there is another triangle:
+	// TODO: set end's weights and indicies on that triangle:
 	end = start;
 	end.indices = glm::vec3(start.indices.y, start.indices.x, f->second);
 	end.weights = glm::vec3(start.weights.y, start.weights.x, 0.f);

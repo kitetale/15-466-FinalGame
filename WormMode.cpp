@@ -405,7 +405,7 @@ void WormMode::update(float elapsed) {
         isTallSide = !isTallSide;
         game_characters[2].isTallSide = !game_characters[2].isTallSide;
     } else if (morph == 3) {
-        float PlayerSpeed = 12.0f;
+        float PlayerSpeed = 4.0f;
 
         float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -419,61 +419,62 @@ void WormMode::update(float elapsed) {
 
 
     //get move in world coordinate system:
+    glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+    if (morph == 2 || morph == 1 || (morph == 3 && !isFlipped)) {
+        //get move in world coordinate system:
+		// glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
+        //using a for() instead of a while() here so that if walkpoint gets stuck in
+		// some awkward case, code will not infinite loop:
+		for (uint32_t iter = 0; iter < 10; ++iter) {
+			if (remain == glm::vec3(0.0f)) break;
+			WalkPoint end;
+			float time;
+			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
+			player.at = end;
+			if (time == 1.0f) {
+				//finished within triangle:
+				remain = glm::vec3(0.0f);
+				break;
+			}
+			//some step remains:
+			remain *= (1.0f - time);
+			//try to step over edge:
+			glm::quat rotation;
+			if (walkmesh->cross_edge(player.at, &end, &rotation, morph)) {
+				//stepped to a new triangle:
+				player.at = end;
+				//rotate step to follow surface:
+				remain = rotation * remain;
+			} else {
+				//ran into a wall, bounce / slide along it:
+				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 along = glm::normalize(b-a);
+				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+				glm::vec3 in = glm::cross(normal, along);
 
-    // if (morph == 1 || morph == 2) {
-    //     //get move in world coordinate system:
-	// 	glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
-    //     //using a for() instead of a while() here so that if walkpoint gets stuck in
-	// 	// some awkward case, code will not infinite loop:
-	// 	for (uint32_t iter = 0; iter < 10; ++iter) {
-	// 		if (remain == glm::vec3(0.0f)) break;
-	// 		WalkPoint end;
-	// 		float time;
-	// 		walkmesh->walk_in_triangle(player.at, remain, &end, &time);
-	// 		player.at = end;
-	// 		if (time == 1.0f) {
-	// 			//finished within triangle:
-	// 			remain = glm::vec3(0.0f);
-	// 			break;
-	// 		}
-	// 		//some step remains:
-	// 		remain *= (1.0f - time);
-	// 		//try to step over edge:
-	// 		glm::quat rotation;
-	// 		if (walkmesh->cross_edge(player.at, &end, &rotation)) {
-	// 			//stepped to a new triangle:
-	// 			player.at = end;
-	// 			//rotate step to follow surface:
-	// 			remain = rotation * remain;
-	// 		} else {
-	// 			//ran into a wall, bounce / slide along it:
-	// 			glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-	// 			glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-	// 			glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
-	// 			glm::vec3 along = glm::normalize(b-a);
-	// 			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-	// 			glm::vec3 in = glm::cross(normal, along);
+				//check how much 'remain' is pointing out of the triangle:
+				float d = glm::dot(remain, in);
+				if (d < 0.0f) {
+					//bounce off of the wall:
+					remain += (-1.25f * d) * in;
+				} else {
+					//if it's just pointing along the edge, bend slightly away from wall:
+					remain += 0.01f * d * in;
+				}
+			}
+		}
+    }
 
-	// 			//check how much 'remain' is pointing out of the triangle:
-	// 			float d = glm::dot(remain, in);
-	// 			if (d < 0.0f) {
-	// 				//bounce off of the wall:
-	// 				remain += (-1.25f * d) * in;
-	// 			} else {
-	// 				//if it's just pointing along the edge, bend slightly away from wall:
-	// 				remain += 0.01f * d * in;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if (remain != glm::vec3(0.0f)) {
-	// 		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-	// 	}
+    // if (remain != glm::vec3(0.0f)) {
+    //     std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
     // }
+
 
     {
 		// update character mesh's position to respect walking
-        glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
+        glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 		// catball.ch_transform->position = player.transform->position;
         if (morph == 0) {
             // worm->transform->position.y += move.y;
@@ -491,11 +492,20 @@ void WormMode::update(float elapsed) {
             //     worm->transform->rotation = startingRotation;
             // }
 
+            // // Standard
             worm.ch_animate->transform->position.y += remain.y;
             worm.ch_animate->transform->position.x += remain.x;
 
             player.transform->position = worm.ch_animate->transform->position;
 
+            // Walkmesh
+            // player.transform->position = walkmesh->to_world_point(player.at);
+
+            // // update character mesh's position to respect walking
+            // game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
+            
+
+            // Animation
             float angle = (remain.x*60.0f);
             worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -514,51 +524,61 @@ void WormMode::update(float elapsed) {
         if (morph == 1) {
             catball.ch_transform->position.y += remain.y;
             catball.ch_transform->position.x += remain.x;
-
-            catball.ch_transform->position.z += remain.z;
-            if (catball.ch_transform->position.z > jumpDist.at(jumpNum) + floorZ) {
-                float extra = catball.ch_transform->position.z - (jumpDist.at(jumpNum) + floorZ);
-                catball.ch_transform->position.z = (jumpDist.at(jumpNum) + floorZ) - extra;
-                jumpDir = -1.0f;
-            }
-            if (catball.ch_transform->position.z < floorZ) {
-                float extra = floorZ - catball.ch_transform->position.z;
-                catball.ch_transform->position.z = floorZ + extra;
-                jumpDir = 1.0f;
-                jumpNum = (jumpNum + 1) % 4;
-                if (jumpNum == 0) {
-                    accel = 1.0f;
-                }
-            }
-
+            
             player.transform->position = catball.ch_transform->position;
 
         }
         if (morph == 2) {
-            remain.x *= elapsed;
-            remain.y *= elapsed;
-            rectangle.ch_transform->position.y += remain.y;
-            rectangle.ch_transform->position.x += remain.x;
+            // Standard
+            // remain.x *= elapsed;
+            // remain.y *= elapsed;
+            // rectangle.ch_transform->position.y += remain.y;
+            // rectangle.ch_transform->position.x += remain.x;
             
-            player.transform->position = rectangle.ch_transform->position;
+            // player.transform->position = rectangle.ch_transform->position;
+            
+            // Walkmesh
+            player.transform->position = walkmesh->to_world_point(player.at);
+
+            // update character mesh's position to respect walking
+            game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
 
             flipped += 1;
         }
         if (morph == 3) {
-            blob.ch_transform->position.y += remain.y;
-            blob.ch_transform->position.x += remain.x;
+            // Standard
+            if (isFlipped) {
+                blob.ch_transform->position.y += remain.y;
+                blob.ch_transform->position.x += remain.x;
 
-            if (justFlipped) {
-                blob.ch_transform->position.z *= -1;
-                blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-                blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                
-                camera_offset_pos.z *= -1;
-                camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
-                justFlipped = false;
+                if (justFlipped) {
+                    blob.ch_transform->position.z *= -1;
+                    blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                    blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    
+                    camera_offset_pos.z *= -1;
+                    camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
+                    justFlipped = false;
+                }
+
+                player.transform->position = blob.ch_transform->position;
+            } else {
+                // Walkmesh 
+                player.transform->position = walkmesh->to_world_point(player.at);
+
+                if (justFlipped) {
+                    player.transform->position.z *= -1;
+                    player.transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                    player.transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    
+                    camera_offset_pos.z *= -1;
+                    camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
+                    justFlipped = false;
+                }
+
+                // update character mesh's position to respect walking
+                game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
             }
-
-            player.transform->position = blob.ch_transform->position;
         }
 
         // update camera location and rotation
