@@ -32,15 +32,27 @@ Load< MeshBuffer > worm_meshes(LoadTagDefault, [](){
 
 // ************************ ANIMATION **************************
 BoneAnimation::Animation const *worm_banim_crawl = nullptr;
-
 Load< BoneAnimation > worm_banims(LoadTagDefault, [](){
 	auto ret = new BoneAnimation(data_path("level.banims"));
 	worm_banim_crawl = &(ret->lookup("Crawl"));
 	return ret;
 });
 
+BoneAnimation::Animation const *blob_banim_walk = nullptr;
+BoneAnimation::Animation const *blob_banim_flip = nullptr;
+Load< BoneAnimation > blob_banims(LoadTagDefault, [](){
+	auto ret = new BoneAnimation(data_path("blob.banims"));
+	blob_banim_walk = &(ret->lookup("Walk"));
+	blob_banim_flip = &(ret->lookup("Flip"));
+	return ret;
+});
+
 Load< GLuint > worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
 	return new GLuint(worm_banims->make_vao_for_program(bone_lit_color_texture_program->program));
+});
+
+Load< GLuint > blob_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
+	return new GLuint(blob_banims->make_vao_for_program(bone_lit_color_texture_program->program));
 });
 
 // ************************** SCENE ****************************
