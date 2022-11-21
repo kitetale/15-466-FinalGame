@@ -514,6 +514,9 @@ void WormMode::update(float elapsed) {
 
             if (!remain.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
                 worm.ch_animate->transform->rotation = worm.wstarting_rotation;
+                if (isFlipped){
+                    worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(.0f, 0.0f, 1.0f)); 
+                }
 
             }
 
@@ -565,6 +568,9 @@ void WormMode::update(float elapsed) {
                     blob.ch_transform->position.z *= -1;
                     blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                     blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+                    // flip other characters too
+                    worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
                     
                     camera_offset_pos.z *= -1;
                     camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
