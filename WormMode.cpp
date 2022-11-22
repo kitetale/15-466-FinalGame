@@ -284,12 +284,24 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
-			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
+			glm::vec3 upDir = walkmesh->to_world_triangle_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
+            float pitch = glm::pitch(camera->transform->rotation);
+			pitch += motion.y * camera->fovy;
+			//camera looks down -z (basically at the player's feet) when pitch is at zero.
+			pitch = std::min(pitch, 0.95f * 3.1415926f);
+			pitch = std::max(pitch, 0.05f * 3.1415926f);
+			camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+
+
             for (auto &character : game_characters) {
                 if (character.first == morph) {
                     Character &ch = character.second;
-                    ch.ch_transform->rotation = glm::angleAxis(-motion.x *camera->fovy, upDir) * ch.ch_transform->rotation;
+                    /* TODO : this line is wrong... */
+                    // store angle/ direction facing for character and reconstruct 
+                    ch.cangle += -motion.x *camera->fovy;
+                    //std::cout<<"("<<upDir.x<<", "<<upDir.y<<", "<<upDir.z<<")"<<std::endl;
+                    ch.ch_transform->rotation = glm::angleAxis(ch.cangle, upDir);
                 }
             }
 			return true;

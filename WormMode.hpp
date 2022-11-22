@@ -64,6 +64,7 @@ struct WormMode : public Mode {
 	struct Character {
 		Scene::Transform *ch_transform = nullptr; // all 'standard' assets
 		Scene::Drawable *ch_animate = nullptr; // all animated assets i.e. worm 
+		float cangle = 0.0f; // character's rotation angle based on mouse move
 		bool ctype = true; // true if standard false if animated
 		glm::quat wstarting_rotation; 
 		bool isTallSide = true; // rectangle only 
