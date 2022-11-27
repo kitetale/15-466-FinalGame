@@ -599,7 +599,6 @@ void WormMode::update(float elapsed) {
                 if (justFlipped) {
                     blob.ch_animate->transform->position.z *= -1;
                     blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-                    blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
                     // flip other characters too
                     worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
