@@ -74,6 +74,7 @@ struct WormMode : public Mode {
 
 	// 0: worm animations 
 	std::vector< BoneAnimationPlayer > worm_animations;
+	std::vector< BoneAnimationPlayer > blob_animations;
 
 	// 2: rectangle only
 	bool isTallSide = true; 
