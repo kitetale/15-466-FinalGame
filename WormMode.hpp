@@ -38,12 +38,14 @@ struct WormMode : public Mode {
 	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
+	glm::quat cam_init_rot;
 
 	// Scene:
 	Scene scene;
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
+	glm::quat start_rot;
 
 	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
 	int old_morph = 1; // For changing between two characters

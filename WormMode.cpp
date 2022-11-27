@@ -117,6 +117,9 @@ WormMode::WormMode() : scene(*worm_scene) {
         //rotate camera facing direction (-z) to player facing direction (+y):
         camera->transform->rotation = camera_offset_rot;
 
+        cam_init_rot = camera->transform->rotation;
+        start_rot = player.transform->rotation;
+
         // Default is cat 
         morph = 1;
         if (morph == 1) {
@@ -336,7 +339,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
                 if (character.first == morph) {
                     Character &ch = character.second;
                     // store angle/ direction facing for character and reconstruct 
-                    ch.cangle += -motion.x *camera->fovy;
+                    ch.cangle += -motion.x * camera->fovy;
                     //std::cout<<"("<<upDir.x<<", "<<upDir.y<<", "<<upDir.z<<")"<<std::endl;
                     ch.ch_transform->rotation = glm::angleAxis(ch.cangle, upDir);
                 }
@@ -712,19 +715,30 @@ void WormMode::morphCharacter(bool forced) {
     if (old_morph != morph || forced) { 
         // Get position of previous active character
         glm::vec3 pos; 
+        glm::quat rot;
         Character old_ch = game_characters[old_morph];
         Character new_ch = game_characters[morph];
         if (old_ch.ctype) {
             pos = old_ch.ch_transform->position; 
+            rot = old_ch.ch_transform->rotation;
         } else {
             pos = old_ch.ch_animate->transform->position; 
+            rot = old_ch.ch_animate->transform->rotation;
         }
         
-        // Update position of new character
+        // Update position & rotation of new character
         if (new_ch.ctype) {
-            new_ch.ch_transform->position = pos; 
+            game_characters[morph].ch_transform->position = pos; 
+            game_characters[morph].ch_transform->rotation = rot;
+            game_characters[morph].cangle = old_ch.cangle;
+            new_ch.cangle = old_ch.cangle;
+            game_characters[morph].ch_transform->rotation = glm::angleAxis(new_ch.cangle, glm::vec3(0.0f,0.0f,1.0f));
         } else { 
             new_ch.ch_animate->transform->position = pos; 
+            // instead of updating rotation of character, update cam rotation
+            camera->transform->rotation = cam_init_rot;
+            player.transform->rotation = start_rot;
+            new_ch.cangle = 0.0f;
         }
 
         // Move all morphs (characters) offscreen
