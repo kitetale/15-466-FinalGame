@@ -342,7 +342,13 @@ void WormMode::update(float elapsed) {
         move.y = step;
     }
     else if (morph == 1) {
-        float PlayerSpeed = 12.0f;
+        float PlayerSpeed = 4.0f * accel;
+        if (jumpDir == 1.0f) {
+            accel *= 0.98f;
+        } else {
+            accel *= 1.05f;
+        }
+        moveZ = jumpDir * PlayerSpeed * elapsed;
 
         if (left && !right) move.x =-1.0f;
 		if (!left && right) move.x = 1.0f;
@@ -546,11 +552,30 @@ void WormMode::update(float elapsed) {
             
             // player.transform->position = catball.ch_transform->position;
 
+           
+            currZ += moveZ;
+            if (currZ > jumpDist.at(jumpNum) + floorZ) {
+                float extra = currZ - (jumpDist.at(jumpNum) + floorZ);
+                currZ = (jumpDist.at(jumpNum) + floorZ) - extra;
+                jumpDir = -1.0f;
+            }
+            if (currZ < floorZ) {
+                float extra = floorZ - currZ;
+                currZ = floorZ + extra;
+                jumpDir = 1.0f;
+                jumpNum = (jumpNum + 1) % 4;
+                if (jumpNum == 0) {
+                    accel = 1.0f;
+                }
+            }
+
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
+            player.transform->position.z = currZ;
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
+            game_characters[morph].ch_transform->position.z = currZ;
 
         }
         if (morph == 2) {
@@ -652,6 +677,15 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 	// 	}
 	// }
+
+    {
+        main_text_renderer->set_drawable_size(drawable_size);
+        glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+        float size_ratio = drawable_size.y / 1200.0f;
+
+        main_text_renderer->renderText("beads remaining: " + std::to_string(num_beads), 50.0f, 50.0f, main_text_size * size_ratio, main_text_color);
+        main_text_renderer->renderText("lives remaining: " + std::to_string(num_lives), drawable_size.x - 600.0f * size_ratio, 50.0f, main_text_size * size_ratio, main_text_color);
+    }
 
     { //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
