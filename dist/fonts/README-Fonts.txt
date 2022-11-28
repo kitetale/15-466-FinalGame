@@ -1,0 +1,3 @@
+Roboto Medium: These fonts are licensed under the Apache License, Version 2.0. From https://fonts.google.com/specimen/Roboto/about?query=roboto
+Rubik Dirt: These fonts are licensed under the Open Font License. From https://fonts.google.com/specimen/Rubik+Dirt/about?query=rubik
+Patua One: These fonts are licensed under the Open Font License. From https://fonts.google.com/specimen/Patua+One/about?query=patua+one 
