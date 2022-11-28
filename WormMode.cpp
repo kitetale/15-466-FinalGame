@@ -362,12 +362,13 @@ void WormMode::update(float elapsed) {
         float sideways = 0.0f;
         float speedForward = 1.0f;
         float speedSideways = 12.0f;
+        float dir = isFlipped ? -1.0f : 1.0f;
 
         if (forward) step += 1.0f;
         if (backward) step -= 1.0f;
         if (worm_animations[0].position <= 0.2f || worm_animations[0].position>=0.8f) {
-            if (left) sideways -= 1.0f;
-            if (right) sideways += 1.0f;
+            if (left) sideways -= 1.0f*dir;
+            if (right) sideways += 1.0f*dir;
         }
         if (step != 0.0f) {
             step = step * speedForward * elapsed;
@@ -383,17 +384,19 @@ void WormMode::update(float elapsed) {
     }
     else if (morph == 1) {
         float PlayerSpeed = 12.0f;
+        float dir = isFlipped ? -1.0f : 1.0f;
 
-        if (left && !right) move.x =-1.0f;
-		if (!left && right) move.x = 1.0f;
+        if (left && !right) move.x =-1.0f*dir;
+		if (!left && right) move.x = 1.0f*dir;
 		if (backward && !forward) move.y =-1.0f;
 		if (!backward && forward) move.y = 1.0f;
 
 		//make it so that moving diagonally doesn't go faster:
 		if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
     } else if (morph == 2 && flipped < 1) {
+        float dir = isFlipped ? -1.0f : 1.0f;
         if (left && !right) {
-            move.x =-2.0f;
+            move.x =-2.0f*dir;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
@@ -409,7 +412,7 @@ void WormMode::update(float elapsed) {
             }
         }
 		if (!left && right) {
-            move.x = 2.0f;
+            move.x = 2.0f*dir;
             rectangle.count += 1;
             if (rectangle.count % 7 == 1){
                 if (isTallSide) {
@@ -597,14 +600,25 @@ void WormMode::update(float elapsed) {
                 // changing to blob animation walk
                 blob.ch_animate->transform->position.y += remain.y;
                 blob.ch_animate->transform->position.x += remain.x;
-                player.transform->position = blob.ch_animate->transform->position;
 
                 if (justFlipped) {
                     blob.ch_animate->transform->position.z *= -1;
                     blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
                     // flip other characters too
-                    worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
+                    for (auto &character : game_characters) {
+                        if (character.first != morph) {
+                            Character &ch = character.second;
+                            if (ch.ctype) {
+                                ch.ch_transform->position.z *= -1;
+                                ch.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } else {
+                                ch.ch_animate->transform->position.z *= -1;
+                                ch.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } 
+                        }
+                    }
+                    
                     
                     camera_offset_pos.z *= -1;
                     camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
