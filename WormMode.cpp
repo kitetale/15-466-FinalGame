@@ -680,7 +680,7 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 
     {
         main_text_renderer->set_drawable_size(drawable_size);
-        glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+        // glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
         float size_ratio = drawable_size.y / 1200.0f;
 
         main_text_renderer->renderText("beads remaining: " + std::to_string(num_beads), 50.0f, 50.0f, main_text_size * size_ratio, main_text_color);
