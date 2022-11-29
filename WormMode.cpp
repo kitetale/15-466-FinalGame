@@ -325,6 +325,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
+            // TODO : check axis the mesh and camera is rotating by
 			glm::vec3 upDir = walkmesh->to_world_triangle_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
             float pitch = glm::pitch(camera->transform->rotation);
@@ -332,7 +333,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
 			pitch = std::min(pitch, 0.95f * 3.1415926f);
 			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			camera->transform->rotation = glm::angleAxis(pitch, upDir);
 
 
             for (auto &character : game_characters) {
@@ -572,24 +573,25 @@ void WormMode::update(float elapsed) {
                 blob.ch_animate->transform->position.z *= -1;
                 blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-                // flip other characters too
-                for (auto &character : game_characters) {
-                    if (character.first != morph) {
-                        Character &ch = character.second;
-                        if (ch.ctype) {
-                            ch.ch_transform->position.z *= -1;
-                            ch.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                        } else {
-                            ch.ch_animate->transform->position.z *= -1;
-                            ch.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                        } 
+                    // flip other characters too
+                    for (auto &character : game_characters) {
+                        if (character.first != morph) {
+                            Character &ch = character.second;
+                            if (ch.ctype) {
+                                ch.ch_transform->position.z *= -1;
+                                ch.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } else {
+                                ch.ch_animate->transform->position.z *= -1;
+                                ch.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } 
+                        }
                     }
+                    
+                    
+                    camera_offset_pos.z *= -1;
+                    camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
+                    justFlipped = false;
                 }
-                
-                camera_offset_pos.z *= -1;
-                camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
-                justFlipped = false;
-            }
 
             // Animation
             blob_animations[0].position += abs(animate_pos.x) * 0.4f + abs(animate_pos.y) * 0.4f;
