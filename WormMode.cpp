@@ -525,7 +525,7 @@ void WormMode::update(float elapsed) {
 		}
     }
 
-    // Update character positions according to walkmesh, perform animations and other in-game interactions
+    // Update character positions according to walkmesh
     {
         player.transform->position = walkmesh->to_world_point(player.at);
         // update character mesh's position to respect walking
@@ -534,6 +534,8 @@ void WormMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
+        glm::vec3 pos = player.transform->position;
+        // std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
     }
 
     // Perform animations and other in-game interactions
