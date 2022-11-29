@@ -3,7 +3,45 @@
 #include "gl_compile_program.hpp"
 #include "gl_errors.hpp"
 
-Load< ParticleProgram > particle_program(LoadTagEarly);
+Scene::Drawable::Pipeline particle_texture_program_pipeline;
+
+Load< Particle Program > particle_texture_program(LoadTagEarly, []() -> LitColorTextureProgram const * {
+	ParticleProgram *ret = new ParticleProgram();
+
+	//----- build the pipeline template -----
+	particle_texture_program_pipeline.program = ret->program;
+
+	particle_texture_program_pipeline.PROJECTION_mat4 = ret->PROJECTION_mat4;
+	particle_texture_program_pipeline.OFFSET_vec2 = ret->OFFSET_vec2;
+	particle_texture_program_pipeline.COLOR_vec4 = ret->COLOR_vec4;
+
+	/* This will be used later if/when we build a light loop into the Scene:
+	particle_texture_program_pipeline.LIGHT_TYPE_int = ret->LIGHT_TYPE_int;
+	particle_texture_program_pipeline.LIGHT_LOCATION_vec3 = ret->LIGHT_LOCATION_vec3;
+	particle_texture_program_pipeline.LIGHT_DIRECTION_vec3 = ret->LIGHT_DIRECTION_vec3;
+	particle_texture_program_pipeline.LIGHT_ENERGY_vec3 = ret->LIGHT_ENERGY_vec3;
+	particle_texture_program_pipeline.LIGHT_CUTOFF_float = ret->LIGHT_CUTOFF_float;
+	*/
+
+	//make a 1-pixel white texture to bind by default:
+	GLuint tex;
+	glGenTextures(1, &tex);
+
+	glBindTexture(GL_TEXTURE_2D, tex);
+	std::vector< glm::u8vec4 > tex_data(1, glm::u8vec4(0xff));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_data.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	particle_texture_program_pipeline.textures[0].texture = tex;
+	particle_texture_program_pipeline.textures[0].target = GL_TEXTURE_2D;
+
+	return ret;
+});
 
 ParticleProgram::ParticleProgram() {
 	//Compile vertex and fragment shaders using the convenient 'gl_compile_program' helper function:

@@ -32,6 +32,9 @@ Load< Particle > smoke_particle(LoadTagDefault, [](){
     particle_program = particle_program->program;
     return ret;
 }
+//load png 
+//gl compile program ->use opengl call 
+
 // TODO : Import dist/particle.png image for particle texture
 //        Import & separate vertex shader and frag shader from particle program
 //        then put into ParticleGenerator :

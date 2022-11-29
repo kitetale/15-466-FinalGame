@@ -2,6 +2,7 @@
 
 #include "GL.hpp"
 #include "Load.hpp"
+#include "Scene.hpp"
 
 //Shader program that draws transformed, colored vertices:
 struct ParticleProgram {
@@ -20,3 +21,5 @@ struct ParticleProgram {
 };
 
 extern Load< ParticleProgram > particle_program;
+
+extern Scene::Drawable::Pipeline particle_texture_program_pipeline;
