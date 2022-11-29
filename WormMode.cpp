@@ -383,16 +383,26 @@ void WormMode::update(float elapsed) {
         move.y = step;
     }
     else if (morph == 1) {
-        float PlayerSpeed = 12.0f;
-        float dir = isFlipped ? -1.0f : 1.0f;
+        // float PlayerSpeed = 12.0f;
+        // float dir = isFlipped ? -1.0f : 1.0f;
+        float PlayerSpeed = 4.0f * accel;
+        if (jumpDir == 1.0f) {
+            accel *= 0.98f;
+        } else {
+            accel *= 1.05f;
+        }
 
-        if (left && !right) move.x =-1.0f*dir;
+    if (left && !right) move.x =-1.0f*dir;
 		if (!left && right) move.x = 1.0f*dir;
 		if (backward && !forward) move.y =-1.0f;
 		if (!backward && forward) move.y = 1.0f;
 
 		//make it so that moving diagonally doesn't go faster:
 		if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+
+        if (!isFlipped) {
+            move.z += PlayerSpeed * elapsed * jumpDir;
+        }
     } else if (morph == 2 && flipped < 1) {
         float dir = isFlipped ? -1.0f : 1.0f;
         if (left && !right) {
@@ -555,7 +565,6 @@ void WormMode::update(float elapsed) {
             player.transform->position = walkmesh->to_world_point(player.at);
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
-
         }
         else if (morph == 2) {
             player.transform->position = walkmesh->to_world_point(player.at);
