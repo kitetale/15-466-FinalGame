@@ -74,16 +74,26 @@ struct WormMode : public Mode {
 	} worm, catball, rectangle, blob;
 	std::unordered_map<int, Character> game_characters; 
 
-	// 0: worm animations 
+
+	// Character specific variables:
+
+	// 0: worm
 	std::vector< BoneAnimationPlayer > worm_animations;
 	std::vector< BoneAnimationPlayer > blob_animations;
 
-	// 2: rectangle only
-	bool isTallSide = true; 
-	// int flipped = false;
+	// 1: catball
+	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
+	int jumpNum = 0;
+	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
+	float floorZ = 0.0f;
+	float accel = 1.0f;
 
-	bool justFlipped = false; // for morph 2 flipping scene
-	bool isFlipped = false; // for morph 2 flipping scene
+	// 2: rectangle
+	bool isTallSide = true; 
+
+	// 3: flipping sphere
+	bool justFlipped = false;
+	bool isFlipped = false;
 
 	// In-game attributes: 
 	void morphCharacter(bool forced); // Change character
