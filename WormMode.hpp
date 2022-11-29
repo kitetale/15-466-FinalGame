@@ -38,12 +38,14 @@ struct WormMode : public Mode {
 	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
+	glm::quat cam_init_rot;
 
 	// Scene:
 	Scene scene;
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
+	glm::quat start_rot;
 
 	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
 	int old_morph = 1; // For changing between two characters
@@ -64,6 +66,7 @@ struct WormMode : public Mode {
 	struct Character {
 		Scene::Transform *ch_transform = nullptr; // all 'standard' assets
 		Scene::Drawable *ch_animate = nullptr; // all animated assets i.e. worm 
+		float cangle = 0.0f; // character's rotation angle based on mouse move
 		bool ctype = true; // true if standard false if animated
 		glm::quat wstarting_rotation; 
 		bool isTallSide = true; // rectangle only 
@@ -76,6 +79,7 @@ struct WormMode : public Mode {
 
 	// 0: worm
 	std::vector< BoneAnimationPlayer > worm_animations;
+	std::vector< BoneAnimationPlayer > blob_animations;
 
 	// 1: catball
 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
