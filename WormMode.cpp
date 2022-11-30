@@ -27,28 +27,41 @@
 // particle reference: https://learnopengl.com/In-Practice/2D-Game/Particles
 ParticleGenerator *Particles; 
 GLuint particle_program = 0;
+glm::uvec2 size (500,500);
+std::vector< glm::u_int64_t > particle_texture;
 Load< Particle > smoke_particle(LoadTagDefault, [](){
-    auto ret = new ParticleGenerator()
-    particle_program = particle_program->program;
+    particle_program = gl_compile_program(
+		//vertex shader:
+		"#version 330\n"
+		"layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>\n"
+		"out vec2 TexCoords;\n"
+		"out vec4 ParticleColor;\n"
+		"uniform mat4 projection;\n"
+        "uniform vec2 offset;\n"
+        "uniform vec4 color;\n"
+		"void main() {\n"
+		"	float scale = 10.0f;\n"
+        "   TexCoords = vertex.zw;\n"
+        "   ParticleColor = color;\n"
+        "   gl_Position = projection * vec4((vertex.xy * scale) + offset, 0.0, 1.0);\n"
+		"}\n"
+	,
+		//fragment shader:
+		"#version 330\n"
+		"in vec2 TexCoords;\n"
+		"in vec4 ParticleColor;\n"
+        "out vec4 color;\n"
+        "uniform sampler2D sprite;\n"
+		"void main() {\n"
+		"	color = (texture(sprite, TexCoords) * ParticleColor);\n"
+		"}\n"
+	);
+    load_png("dist/particle.png", &size, &particle_texture, LowerLeftOrigin);
+    auto ret = new ParticleGenerator(particle_program,particle_texture,500);
     return ret;
 }
-//load png 
-//gl compile program ->use opengl call 
 
-// TODO : Import dist/particle.png image for particle texture
-//        Import & separate vertex shader and frag shader from particle program
-//        then put into ParticleGenerator :
-/* [...]
-    ResourceManager::LoadShader("shaders/particle.vs", "shaders/particle.frag", nullptr, "particle");
-    [...]
-    ResourceManager::LoadTexture("textures/particle.png", true, "particle"); 
-    [...]
-    Particles = new ParticleGenerator(
-        ResourceManager::GetShader("particle"), 
-        ResourceManager::GetTexture("particle"), 
-        500
-    );
-*/
+
 
 // ************************* MESH ******************************
 GLuint worm_meshes_for_lit_color_texture_program = 0;
