@@ -144,6 +144,7 @@ const game_names = [
 	maek.CPP('load_wav.cpp'),
 	maek.CPP('load_opus.cpp'),
 	maek.CPP('WormMode.cpp'),
+	maek.CPP('SplashScreenMode.cpp'),
 	maek.CPP('BoneAnimation.cpp'),
 	maek.CPP('BoneLitColorTextureProgram.cpp')
 ];
@@ -161,7 +162,9 @@ const common_names = [
 	maek.CPP('Mode.cpp'),
 	maek.CPP('GL.cpp'),
 	maek.CPP('Load.cpp'),
-	maek.CPP('make_vao_for_program.cpp')
+	maek.CPP('make_vao_for_program.cpp'),
+	maek.CPP('TextRendering.cpp'),
+	maek.CPP('TextTextureProgram.cpp')
 ];
 
 const show_meshes_names = [

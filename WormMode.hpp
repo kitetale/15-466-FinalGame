@@ -7,6 +7,8 @@
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
 
+#include "data_path.hpp"
+
 #include <SDL.h>
 #include <glm/glm.hpp>
 
@@ -14,6 +16,8 @@
 #include <map> 
 #include <deque>
 #include <list>
+
+#include "TextRendering.hpp"
 
 struct WormMode : public Mode {
 	WormMode();
@@ -27,8 +31,8 @@ struct WormMode : public Mode {
 	bool mouse_captured = false;
 	bool forward = false;
 	bool backward = false;
-    bool left = false;
-    bool right = false;
+   	bool left = false;
+    	bool right = false;
 
 	// Camera 
 	Scene::Camera *camera = nullptr;
@@ -37,7 +41,7 @@ struct WormMode : public Mode {
 	float camera_elevation = glm::radians(45.0f);
 	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
+    	glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
 	glm::quat cam_init_rot;
 
 	// Scene:
@@ -50,12 +54,12 @@ struct WormMode : public Mode {
 	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
 	int old_morph = 1; // For changing between two characters
 
-    //goal to reach
+    	//goal to reach
 	Scene::Transform *goal = nullptr;
 	Scene::Transform *topGoal = nullptr;
 	Scene::Transform *rectGoal = nullptr;
 
-    // Player info:
+   	// Player info:
 	struct Player {
 		WalkPoint at;
 		// Transform is at player's feet and will be yawed by mouse left/right motion:
@@ -81,14 +85,24 @@ struct WormMode : public Mode {
 	std::vector< BoneAnimationPlayer > worm_animations;
 	std::vector< BoneAnimationPlayer > blob_animations;
 
+// 	// 1: catball
+// 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
+// 	int jumpNum = 0;
+// 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
+// 	float floorZ = 0.0f;
+// 	float accel = 1.0f;
+
+
 	// 1: catball
 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
 	int jumpNum = 0;
 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
 	float floorZ = 0.0f;
 	float accel = 1.0f;
+	float currZ = 0.0f;
+	float moveZ = 0.0f;
 
-	// 2: rectangle
+	// 2: rectangle only
 	bool isTallSide = true; 
 
 	// 3: flipping sphere
@@ -106,4 +120,11 @@ struct WormMode : public Mode {
 	// Lives and collisions 
 	uint8_t num_lives = 3; 
 	std::vector < Scene::Transform* > obstacles;
+
+	// Font
+	TextRenderer *rubik_renderer = new TextRenderer(data_path("fonts/RubikDirt-Regular.ttf"), 200);
+	TextRenderer *main_text_renderer = rubik_renderer;
+
+	float main_text_size = 0.3f;
+    glm::vec3 main_text_color = glm::vec3(1.0f, 1.0f, 1.0f);
 };
