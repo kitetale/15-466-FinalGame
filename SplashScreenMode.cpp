@@ -84,9 +84,9 @@ void SplashScreenMode::draw(glm::uvec2 const &drawable_size) {
         glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
         float size_ratio = drawable_size.y / 1200.0f;
 
-        main_text_renderer->renderText("Morphology Mania", center.x - 775.0f * size_ratio, center.y + 100.0f * size_ratio, 0.8f * size_ratio, highlight_text_color);
-        main_text_renderer->renderText("1: Tutorial", center.x - 650.0f * size_ratio, center.y - 100.0f * size_ratio, main_text_size * size_ratio, lerp(main_text_color, tutorial_text_color, press_elapsed));
-        main_text_renderer->renderText("2: Game", center.x + 200.0f * size_ratio, center.y - 100.0f * size_ratio, main_text_size * size_ratio, lerp(main_text_color, game_text_color, press_elapsed));
+        main_text_renderer->renderText("Morphology Mania", center.x - 650.0f * size_ratio, center.y + 100.0f * size_ratio, 0.8f * size_ratio, highlight_text_color);
+        main_text_renderer->renderText("1: Tutorial", center.x - 650.0f * size_ratio, center.y - 160.0f * size_ratio, main_text_size * size_ratio, lerp(main_text_color, tutorial_text_color, press_elapsed));
+        main_text_renderer->renderText("2: Game", center.x + 230.0f * size_ratio, center.y - 160.0f * size_ratio, main_text_size * size_ratio, lerp(main_text_color, game_text_color, press_elapsed));
     }
 
 

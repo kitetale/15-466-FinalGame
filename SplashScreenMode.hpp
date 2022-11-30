@@ -30,7 +30,7 @@ struct SplashScreenMode : public Mode {
 
 	// TextRenderer *roboto_renderer = new TextRenderer(data_path("fonts/Roboto-Medium.ttf"), 54);
 	// TextRenderer *patua_renderer = new TextRenderer(data_path("fonts/PatuaOne-Regular.ttf"), 54);
-	TextRenderer *rubik_renderer = new TextRenderer(data_path("fonts/RubikDirt-Regular.ttf"), 200);
+	TextRenderer *rubik_renderer = new TextRenderer(data_path("fonts/Mansalva-Regular.ttf"), 200);
 	TextRenderer *main_text_renderer = rubik_renderer;
 
 	float main_text_size = 0.5f;
