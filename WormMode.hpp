@@ -7,6 +7,8 @@
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
 
+#include "data_path.hpp"
+
 #include <SDL.h>
 #include <glm/glm.hpp>
 
@@ -14,6 +16,8 @@
 #include <map> 
 #include <deque>
 #include <list>
+
+#include "TextRendering.hpp"
 
 struct WormMode : public Mode {
 	WormMode();
@@ -88,7 +92,17 @@ struct WormMode : public Mode {
 	float floorZ = 0.0f;
 	float accel = 1.0f;
 
-	// 2: rectangle
+
+	// 1: catball
+	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
+	int jumpNum = 0;
+	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
+	float floorZ = 0.0f;
+	float accel = 1.0f;
+	float currZ = 0.0f;
+	float moveZ = 0.0f;
+
+	// 2: rectangle only
 	bool isTallSide = true; 
 
 	// 3: flipping sphere
@@ -106,4 +120,11 @@ struct WormMode : public Mode {
 	// Lives and collisions 
 	uint8_t num_lives = 3; 
 	std::vector < Scene::Transform* > obstacles;
+
+	// Font
+	TextRenderer *rubik_renderer = new TextRenderer(data_path("fonts/RubikDirt-Regular.ttf"), 200);
+	TextRenderer *main_text_renderer = rubik_renderer;
+
+	float main_text_size = 0.3f;
+    glm::vec3 main_text_color = glm::vec3(1.0f, 1.0f, 1.0f);
 };

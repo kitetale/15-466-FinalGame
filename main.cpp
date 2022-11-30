@@ -3,6 +3,7 @@
 
 //Starting mode:
 #include "WormMode.hpp"
+#include "SplashScreenMode.hpp"
 
 //Deal with calling resource loading functions:
 #include "Load.hpp"
@@ -99,7 +100,7 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< WormMode >());
+	Mode::set_current(std::make_shared< SplashScreenMode >());
 
 	//------------ main loop ------------
 
