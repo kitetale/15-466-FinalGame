@@ -2,8 +2,6 @@
 
 #include "LitColorTextureProgram.hpp"
 #include "BoneLitColorTextureProgram.hpp"
-#include "ParticleProgram.hpp"
-#include "particle_generator.hpp"
 #include "DrawLines.hpp"
 #include "Load.hpp"
 #include "Mesh.hpp"
@@ -11,6 +9,7 @@
 #include "gl_errors.hpp"
 #include "data_path.hpp"
 #include "load_save_png.hpp"
+#include "gl_compile_program.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -25,40 +24,71 @@
 
 // ************************* PARTICLE **************************
 // particle reference: https://learnopengl.com/In-Practice/2D-Game/Particles
-ParticleGenerator *Particles; 
-GLuint particle_program = 0;
 glm::uvec2 size (500,500);
-std::vector< glm::u_int64_t > particle_texture;
-Load< Particle > smoke_particle(LoadTagDefault, [](){
-    particle_program = gl_compile_program(
-		//vertex shader:
-		"#version 330\n"
-		"layout (location = 0) in vec4 vertex; // <vec2 position, vec2 texCoords>\n"
-		"out vec2 TexCoords;\n"
-		"out vec4 ParticleColor;\n"
-		"uniform mat4 projection;\n"
-        "uniform vec2 offset;\n"
-        "uniform vec4 color;\n"
-		"void main() {\n"
-		"	float scale = 10.0f;\n"
-        "   TexCoords = vertex.zw;\n"
-        "   ParticleColor = color;\n"
-        "   gl_Position = projection * vec4((vertex.xy * scale) + offset, 0.0, 1.0);\n"
-		"}\n"
-	,
-		//fragment shader:
-		"#version 330\n"
-		"in vec2 TexCoords;\n"
-		"in vec4 ParticleColor;\n"
-        "out vec4 color;\n"
-        "uniform sampler2D sprite;\n"
-		"void main() {\n"
-		"	color = (texture(sprite, TexCoords) * ParticleColor);\n"
-		"}\n"
-	);
-    load_png("dist/particle.png", &size, &particle_texture, LowerLeftOrigin);
-    auto ret = new ParticleGenerator(particle_program,particle_texture,500);
-    return ret;
+std::vector< glm::u8vec4 > particle_texture_data;
+GLuint particle_program = gl_compile_program(
+    //vertex shader:
+    "#version 330 core\n"
+    "layout (location = 0) in vec4 vertex;\n"
+    "out vec2 TexCoords;\n"
+    "out vec4 ParticleColor;\n"
+    "uniform mat4 projection;\n"
+    "uniform vec2 offset;\n"
+    "uniform vec4 color;\n"
+    "void main() {\n"
+    "	float scale = 10.0f;\n"
+    "   TexCoords = vertex.zw;\n"
+    "   ParticleColor = color;\n"
+    "   gl_Position = projection * vec4((vertex.xy * scale) + offset, 0.0, 1.0);\n"
+    "}\n"
+,
+    //fragment shader:
+    "#version 330 core\n"
+    "in vec2 TexCoords;\n"
+    "in vec4 ParticleColor;\n"
+    "out vec4 color;\n"
+    "uniform sampler2D sprite;\n"
+    "void main() {\n"
+    "	color = (texture(sprite, TexCoords) * ParticleColor);\n"
+    "}\n"
+);
+
+GLuint SPRITE_sampler2D = glGetUniformLocation(particle_program, "sprite");
+
+int WormMode::firstUnusedParticle() {
+    // first search from last used particle, this will usually return almost instantly
+    for (unsigned int i = lastUsedParticle; i < total_particles; ++i){
+        if (particles[i].Life <= 0.0f){
+            lastUsedParticle = i;
+            return i;
+        }
+    }
+    // otherwise, do a linear search
+    for (unsigned int i = 0; i < lastUsedParticle; ++i){
+        if (particles[i].Life <= 0.0f){
+            lastUsedParticle = i;
+            return i;
+        }
+    }
+    // all particles are taken, override the first one (note that if it repeatedly hits this case, more particles should be reserved)
+    lastUsedParticle = 0;
+    return 0;
+}
+
+void WormMode::respawnParticle(Particle &particle, Character cur_char, glm::vec2 offset)
+{
+    float random = ((rand() % 100) - 50) / 10.0f;
+    float rColor = 0.5f + ((rand() % 100) / 100.0f);
+    glm::vec3 pos;
+    if (cur_char.ctype){
+        pos = cur_char.ch_transform->position;
+    } else {
+        pos = cur_char.ch_animate->transform->position;
+    }
+    particle.Position = glm::vec2(pos.x,pos.z) + glm::vec2(random) + offset;
+    particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
+    particle.Life = 1.0f;
+    particle.Velocity =  glm::vec2(0.1f);
 }
 
 
@@ -128,7 +158,10 @@ Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 // ************************ WORM MODE **************************
 WormMode::WormMode() : scene(*worm_scene) {
     // PARTICLE SETUP ----------------------------------------------------------
-    
+    load_png("dist/particle.png", &size, &particle_texture_data, LowerLeftOrigin);
+    for (unsigned int i = 0; i < total_particles; ++i){
+        particles.push_back(Particle());
+    }
 
     // MESH & WALKMESH SETUP ---------------------------------------------------
     {
@@ -398,10 +431,23 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void WormMode::update(float elapsed) {
-    // update particles
-    // TODO : update particles with emitter as current character
-    // also update only when just morphed
-    //Particles->Update(dt, *Ball, 2, glm::vec2(Ball->Radius / 2.0f));
+    // add new particles
+    for (unsigned int i = 0; i < 2; ++i)
+    {
+        int unusedParticle = firstUnusedParticle();
+        respawnParticle(particles[unusedParticle],game_characters[morph], particle_offset);
+    }
+    // update all particles
+    for (unsigned int i = 0; i < total_particles; ++i)
+    {
+        Particle &p = particles[i];
+        p.Life -= elapsed; // reduce life
+        if (p.Life > 0.0f)
+        {	// particle is alive, thus update
+            p.Position -= p.Velocity * elapsed;
+            p.Color.a -= elapsed * 2.5f;
+        }
+    }  
 
 
     // Change character if input provided 
@@ -714,9 +760,31 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	glUseProgram(0);
 
     // Draw Particles:
-    glUseProgram(particle_program->program);
-    Particles->Draw();
+    {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glUseProgram(particle_program);
+    for (Particle particle : particles)
+    {
+        if (particle.Life > 0.0f)
+        {
+            glUniform2f(glGetUniformLocation(particle_program, "offset"), particle.Position.x, particle.Position.y);
+            glUniform4f(glGetUniformLocation(particle_program, "color"), particle.Color.x, particle.Color.y, particle.Color.z, particle.Color.w);
+
+            glGenTextures(1, &particle_texture);
+            glBindTexture(GL_TEXTURE_2D, particle_texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 500, 500, 0, GL_RGB, GL_UNSIGNED_BYTE, &particle_texture_data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            glGenVertexArrays(1, &particle_vao);
+            glBindVertexArray(particle_vao);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glBindVertexArray(0);
+        }
+    }
+    // don't forget to reset to default blending mode
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glUseProgram(0);
+    }
 
     // grey world background 
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);

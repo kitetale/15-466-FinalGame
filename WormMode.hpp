@@ -52,6 +52,12 @@ struct WormMode : public Mode {
 		Particle() 
 			: Position(0.0f), Velocity(0.0f), Color(1.0f), Life(0.0f) { }
 	};
+	std::vector<Particle> particles;
+	uint32_t total_particles = 500;
+	uint32_t lastUsedParticle = 0;
+	glm::vec2 particle_offset = glm::vec2(1.5f);
+	GLuint particle_vao = 0;
+	GLuint particle_texture;
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
@@ -106,4 +112,8 @@ struct WormMode : public Mode {
 	// Lives and collisions 
 	uint8_t num_lives = 3; 
 	std::vector < Scene::Transform* > obstacles;
+
+	// functions for particles
+	int firstUnusedParticle();
+	void respawnParticle(Particle &particle, Character cur_char, glm::vec2 offset);
 };
