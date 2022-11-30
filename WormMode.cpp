@@ -57,8 +57,8 @@ void WormMode::respawnParticle(Particle &particle, Character cur_char, glm::vec2
     }
     particle.Position = glm::vec2(pos.x,pos.z) + glm::vec2(random) + offset;
     particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
-    particle.Life = 1.0f;
-    particle.Velocity =  glm::vec2(3.0f);
+    particle.Life = 0.01f;
+    particle.Velocity =  glm::vec2(1.0f);
 }
 
 
@@ -181,6 +181,7 @@ WormMode::WormMode() : scene(*worm_scene) {
 
 
     load_png("dist/particle.png", &size, &particle_texture_data, LowerLeftOrigin);
+    
     for (unsigned int i = 0; i < total_particles; ++i){
         particles.push_back(Particle());
     }
@@ -410,6 +411,9 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         }
         return true;
     } 
+    if (evt.type == SDL_KEYUP && evt.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+        runParticle = !runParticle;
+    }
     if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE) {
         SDL_SetRelativeMouseMode(SDL_FALSE);
         return true;
@@ -453,6 +457,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void WormMode::update(float elapsed) {
+
     // add new particles
     for (unsigned int i = 0; i < 2; ++i)
     {
@@ -460,16 +465,19 @@ void WormMode::update(float elapsed) {
         respawnParticle(particles[unusedParticle],game_characters[morph], particle_offset);
     }
     // update all particles
-    for (unsigned int i = 0; i < total_particles; ++i)
-    {
-        Particle &p = particles[i];
-        p.Life -= elapsed; // reduce life
-        if (p.Life > 0.0f)
-        {	// particle is alive, thus update
-            p.Position -= p.Velocity * elapsed;
-            p.Color.a -= elapsed * 2.5f;
-        }
-    }  
+    if (runParticle){
+        for (unsigned int i = 0; i < total_particles; ++i)
+        {
+            Particle &p = particles[i];
+            p.Life -= elapsed; // reduce life
+            if (p.Life > 0.0f)
+            {	// particle is alive, thus update
+                p.Position -= p.Velocity * elapsed;
+                p.Color.a -= elapsed * 2.5f;
+            }
+            std::cout<<"new particle: "<<p.Position.x<<" , "<<p.Position.y<<std::endl;
+        }  
+    }
 
 
     // Change character if input provided 
@@ -785,21 +793,23 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
     {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glUseProgram(particle_program);
-    for (Particle particle : particles)
-    {
-        if (particle.Life > 0.0f)
+    if (runParticle){
+        for (Particle particle : particles)
         {
-            glUniform2f(glGetUniformLocation(particle_program, "offset"), particle.Position.x, particle.Position.y);
-            glUniform4f(glGetUniformLocation(particle_program, "color"), particle.Color.x, particle.Color.y, particle.Color.z, particle.Color.w);
+            if (particle.Life > 0.0f)
+            {
+                glUniform2f(glGetUniformLocation(particle_program, "offset"), particle.Position.x, particle.Position.y);
+                glUniform4f(glGetUniformLocation(particle_program, "color"), particle.Color.x, particle.Color.y, particle.Color.z, particle.Color.w);
 
-            glGenTextures(1, &particle_texture);
-            glBindTexture(GL_TEXTURE_2D, particle_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 500, 500, 0, GL_RGB, GL_UNSIGNED_BYTE, &particle_texture_data);
+                glGenTextures(1, &particle_texture);
+                glBindTexture(GL_TEXTURE_2D, particle_texture);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 500, 500, 0, GL_RGB, GL_UNSIGNED_BYTE, &particle_texture_data);
 
-            glGenVertexArrays(1, &particle_vao);
-            glBindVertexArray(particle_vao);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glBindVertexArray(0);
+                glGenVertexArrays(1, &particle_vao);
+                glBindVertexArray(particle_vao);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindVertexArray(0);
+            }
         }
     }
     // don't forget to reset to default blending mode

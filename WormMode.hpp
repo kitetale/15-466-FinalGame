@@ -50,10 +50,10 @@ struct WormMode : public Mode {
 		float Life;
 	
 		Particle() 
-			: Position(0.0f), Velocity(0.0f), Color(1.0f), Life(0.0f) { }
+			: Position(0.0f), Velocity(0.1f), Color(1.0f), Life(1.0f) { }
 	};
 	std::vector<Particle> particles;
-	uint32_t total_particles = 500;
+	uint32_t total_particles = 100;
 	uint32_t lastUsedParticle = 0;
 	glm::vec2 particle_offset = glm::vec2(1.5f);
 	GLuint particle_vao = 0;
@@ -61,6 +61,7 @@ struct WormMode : public Mode {
 	GLuint particle_program = 0;
 	std::vector< glm::u8vec4 > particle_texture_data;
 	glm::uvec2 size = glm::uvec2 (500,500);
+	bool runParticle = false;
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
