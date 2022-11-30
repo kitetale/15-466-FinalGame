@@ -258,7 +258,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         return true; 
     }
 
-    // movements
+    // Movements
 	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_w) {
 		forward = true;
         if (morph == 0) {
@@ -348,8 +348,6 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
     }
-
-
 	return false;
 }
 
