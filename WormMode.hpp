@@ -42,12 +42,14 @@ struct WormMode : public Mode {
 	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
+	glm::quat cam_init_rot;
 
 	// Scene:
 	Scene scene;
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
+	glm::quat start_rot;
 
 	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
 	int old_morph = 1; // For changing between two characters
@@ -76,8 +78,20 @@ struct WormMode : public Mode {
 	} worm, catball, rectangle, blob;
 	std::unordered_map<int, Character> game_characters; 
 
-	// 0: worm animations 
+
+	// Character specific variables:
+
+	// 0: worm
 	std::vector< BoneAnimationPlayer > worm_animations;
+	std::vector< BoneAnimationPlayer > blob_animations;
+
+	// 1: catball
+	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
+	int jumpNum = 0;
+	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
+	float floorZ = 0.0f;
+	float accel = 1.0f;
+
 
 	// 1: catball
 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
@@ -90,10 +104,10 @@ struct WormMode : public Mode {
 
 	// 2: rectangle only
 	bool isTallSide = true; 
-	// int flipped = false;
 
-	bool justFlipped = false; // for morph 2 flipping scene
-	bool isFlipped = false; // for morph 2 flipping scene
+	// 3: flipping sphere
+	bool justFlipped = false;
+	bool isFlipped = false;
 
 	// In-game attributes: 
 	void morphCharacter(bool forced); // Change character

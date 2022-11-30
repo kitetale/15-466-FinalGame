@@ -95,7 +95,7 @@ WormMode::WormMode() : scene(*worm_scene) {
         for (auto &transform : scene.transforms) {
             if (transform.name == "Catball") catball.ch_transform = &transform;
             if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
-            if (transform.name == "Blob") blob.ch_transform = &transform;
+            //if (transform.name == "Blob") blob.ch_transform = &transform;
             if (transform.name.substr(0, transform.name.size()-1) == "bead") {
                 beads.push_back(&transform);
             }
@@ -116,6 +116,9 @@ WormMode::WormMode() : scene(*worm_scene) {
         player.transform->position = start_pos;
         //rotate camera facing direction (-z) to player facing direction (+y):
         camera->transform->rotation = camera_offset_rot;
+
+        cam_init_rot = camera->transform->rotation;
+        start_rot = player.transform->rotation;
 
         // Default is cat 
         morph = 1;
@@ -163,6 +166,43 @@ WormMode::WormMode() : scene(*worm_scene) {
         worm.ch_animate->transform->position =  glm::vec3(0.0f);
         worm.ctype = false; 
         worm.wstarting_rotation = worm.ch_animate->transform->rotation; 
+	}
+
+    // Blob animation setup ----------------------------------------------------
+	{ 
+		Scene::Drawable::Pipeline blob_info;
+		blob_info = bone_lit_color_texture_program_pipeline;
+
+		blob_info.vao = *blob_banims_for_bone_lit_color_texture_program;
+		blob_info.start = blob_banims->mesh.start;
+		blob_info.count = blob_banims->mesh.count;
+
+        // Add crawl animation to worm_animations list
+		blob_animations.reserve(1);
+        blob_animations.emplace_back(*blob_banims, *blob_banim_walk, BoneAnimationPlayer::Loop, 0.0f);
+        //blob_animations.emplace_back(*blob_banims, *blob_banim_flip, BoneAnimationPlayer::Loop, 0.0f);
+
+        BoneAnimationPlayer *blobAnimation = &blob_animations.back();
+    
+        blob_info.set_uniforms = [blobAnimation](){
+            blobAnimation->set_uniform(bone_lit_color_texture_program->BONES_mat4x3_array);
+        };
+
+        assert(blob_animations.size() == 1);
+
+        scene.transforms.emplace_back();
+        Scene::Transform *transform = &scene.transforms.back();
+        transform->position.x = 0.0f;
+        transform->position.y = 0.0f;
+        transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        scene.drawables.emplace_back(transform);
+        Scene::Drawable *blob1 = &scene.drawables.back();
+        blob1->pipeline = blob_info;
+
+        // Initialize worm
+        this->blob.ch_animate = blob1;
+        blob.ch_animate->transform->position =  glm::vec3(0.0f);
+        blob.ctype = false;  
 	}
 
     // Insert all characters into game_characters
@@ -279,11 +319,13 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEMOTION) {
+        if (morph==0||morph==3)return true; //no mouse move for worm
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
             glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
+            // TODO : check axis the mesh and camera is rotating by
 			glm::vec3 upDir = walkmesh->to_world_triangle_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
             float pitch = glm::pitch(camera->transform->rotation);
@@ -291,15 +333,14 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
 			pitch = std::min(pitch, 0.95f * 3.1415926f);
 			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+			camera->transform->rotation = glm::angleAxis(pitch, upDir);
 
 
             for (auto &character : game_characters) {
                 if (character.first == morph) {
                     Character &ch = character.second;
-                    /* TODO : this line is wrong... */
                     // store angle/ direction facing for character and reconstruct 
-                    ch.cangle += -motion.x *camera->fovy;
+                    ch.cangle += -motion.x * camera->fovy;
                     //std::cout<<"("<<upDir.x<<", "<<upDir.y<<", "<<upDir.z<<")"<<std::endl;
                     ch.ch_transform->rotation = glm::angleAxis(ch.cangle, upDir);
                 }
@@ -316,136 +357,132 @@ void WormMode::update(float elapsed) {
     // Change character if input provided 
     this->morphCharacter(false); 
 
+    // Compute movement of chararacter
     glm::vec3 move = glm::vec3(0.0f);
-    if (morph == 0) {
-        float step = 0.0f;
-        float sideways = 0.0f;
-        float speedForward = 1.0f;
-        float speedSideways = 12.0f;
+    {
+        if (morph == 0) {
+            float step = 0.0f;
+            float sideways = 0.0f;
+            float speedForward = 1.0f;
+            float speedSideways = 12.0f;
+            float dir = isFlipped ? -1.0f : 1.0f;
 
-        if (forward) step += 1.0f;
-        if (backward) step -= 1.0f;
-        if (worm_animations[0].position <= 0.2f || worm_animations[0].position>=0.8f) {
-            if (left) sideways -= 1.0f;
-            if (right) sideways += 1.0f;
+            if (forward) step += 1.0f;
+            if (backward) step -= 1.0f;
+            if (worm_animations[0].position <= 0.2f || worm_animations[0].position>=0.8f) {
+                if (left) sideways -= 1.0f*dir;
+                if (right) sideways += 1.0f*dir;
+            }
+            if (step != 0.0f) {
+                step = step * speedForward * elapsed;
+                sideways = 0.0f;
+            }
+            if (sideways != 0.0f) {
+                sideways = sideways * speedSideways * elapsed;
+                step = 0.0f;
+            }
+            move.x = sideways;
+            move.y = step;
         }
-        if (step != 0.0f) {
-            step = step * speedForward * elapsed;
-            sideways = 0.0f;
-        }
-        if (sideways != 0.0f) {
-            sideways = sideways * speedSideways * elapsed;
-            step = 0.0f;
-        }
+        else if (morph == 1) {
+            float PlayerSpeed = 12.0f;
+            float dir = isFlipped ? -1.0f : 1.0f;
 
-        move.x = sideways;
-        move.y = step;
-    }
-    else if (morph == 1) {
-        float PlayerSpeed = 4.0f * accel;
-        if (jumpDir == 1.0f) {
-            accel *= 0.98f;
-        } else {
-            accel *= 1.05f;
-        }
-        moveZ = jumpDir * PlayerSpeed * elapsed;
+            if (left && !right) move.x =-1.0f*dir;
+            if (!left && right) move.x = 1.0f*dir;
+            if (backward && !forward) move.y =-1.0f;
+            if (!backward && forward) move.y = 1.0f;
 
-        if (left && !right) move.x =-1.0f;
-		if (!left && right) move.x = 1.0f;
-		if (backward && !forward) move.y =-1.0f;
-		if (!backward && forward) move.y = 1.0f;
-
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-    } else if (morph == 2 && flipped < 1) {
-        if (left && !right) {
-            move.x =-2.0f;
-            rectangle.count += 1;
-            if (rectangle.count % 7 == 1){
-                if (isTallSide) {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    move.z = -1.0f;
-                    
-                } else {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    move.z = 1.0f;
+            // Make it so that moving diagonally doesn't go faster:
+            if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+        } else if (morph == 2 && flipped < 1) {
+            float dir = isFlipped ? -1.0f : 1.0f;
+            if (left && !right) {
+                move.x =-2.0f*dir;
+                rectangle.count += 1;
+                if (rectangle.count % 7 == 1){
+                    if (isTallSide) {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                        move.z = -1.0f;
+                    } else {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        move.z = 1.0f;
+                    }
                 }
             }
-        }
-		if (!left && right) {
-            move.x = 2.0f;
-            rectangle.count += 1;
-            if (rectangle.count % 7 == 1){
-                if (isTallSide) {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                    move.z = -1.0f;
-                    
-                } else {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    move.z = 1.0f;
+            if (!left && right) {
+                move.x = 2.0f*dir;
+                rectangle.count += 1;
+                if (rectangle.count % 7 == 1){
+                    if (isTallSide) {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
+                        move.z = -1.0f;
+                        
+                    } else {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        move.z = 1.0f;
+                    }
                 }
             }
-        }
-		if (backward && !forward) {
-            move.y =-2.0f;
-            rectangle.count += 1;
-            if (rectangle.count % 7 == 1){
-                if (isTallSide) {
-                    rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    move.z = -1.0f;
-                    
-                } else {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    move.z = 1.0f;
+            if (backward && !forward) {
+                move.y =-2.0f;
+                rectangle.count += 1;
+                if (rectangle.count % 7 == 1){
+                    if (isTallSide) {
+                        rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                        move.z = -1.0f;
+                        
+                    } else {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        move.z = 1.0f;
+                    }
                 }
             }
-        }
-		if (!backward && forward) {
-            move.y = 2.0f;
-            rectangle.count += 1;
-            if (rectangle.count % 7 == 1){
-                if (isTallSide) {
-                    rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                    move.z = -1.0f;
-                    
-                } else {
-                    rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                    move.z = 1.0f;
+            if (!backward && forward) {
+                move.y = 2.0f;
+                rectangle.count += 1;
+                if (rectangle.count % 7 == 1){
+                    if (isTallSide) {
+                        rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
+                        move.z = -1.0f;
+                        
+                    } else {
+                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
+                        move.z = 1.0f;
+                    }
                 }
             }
+
+            isTallSide = !isTallSide;
+            game_characters[2].isTallSide = !game_characters[2].isTallSide;
+        } else if (morph == 3) {
+            float PlayerSpeed = 4.0f;
+
+            float dir = isFlipped ? -1.0f : 1.0f;
+
+            if (left && !right) move.x =-1.0f * dir;
+            if (!left && right) move.x = 1.0f * dir;
+            if (backward && !forward) move.y =-1.0f;
+            if (!backward && forward) move.y = 1.0f;
+
+            if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
         }
-
-        isTallSide = !isTallSide;
-        game_characters[2].isTallSide = !game_characters[2].isTallSide;
-    } else if (morph == 3) {
-        float PlayerSpeed = 4.0f;
-
-        float dir = isFlipped ? -1.0f : 1.0f;
-
-        if (left && !right) move.x =-1.0f * dir;
-        if (!left && right) move.x = 1.0f * dir;
-        if (backward && !forward) move.y =-1.0f;
-        if (!backward && forward) move.y = 1.0f;
-
-        if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
     }
 
-
-    //get move in world coordinate system:
+    // Get move in world coordinate system:
     glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-    if (morph == 2 || morph == 1 || (morph == 3 && !isFlipped)) {
-        //get move in world coordinate system:
-		// glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, move.z, 0.0f);
-        //using a for() instead of a while() here so that if walkpoint gets stuck in
-		// some awkward case, code will not infinite loop:
+    glm::vec3 animate_pos = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+    {
+        // Using a for() instead of a while() here so that if walkpoint gets stuck in
+		// Some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter) {
 			if (remain == glm::vec3(0.0f)) break;
 			WalkPoint end;
@@ -453,21 +490,21 @@ void WormMode::update(float elapsed) {
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
 			if (time == 1.0f) {
-				//finished within triangle:
+				// Finished within triangle:
 				remain = glm::vec3(0.0f);
 				break;
 			}
-			//some step remains:
+			// Some step remains:
 			remain *= (1.0f - time);
-			//try to step over edge:
+			// Try to step over edge:
 			glm::quat rotation;
 			if (walkmesh->cross_edge(player.at, &end, &rotation, morph)) {
-				//stepped to a new triangle:
+				// Stepped to a new triangle:
 				player.at = end;
-				//rotate step to follow surface:
+				// Rotate step to follow surface:
 				remain = rotation * remain;
 			} else {
-				//ran into a wall, bounce / slide along it:
+				// Ran into a wall, bounce / slide along it:
 				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
 				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
 				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
@@ -475,62 +512,40 @@ void WormMode::update(float elapsed) {
 				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
 				glm::vec3 in = glm::cross(normal, along);
 
-				//check how much 'remain' is pointing out of the triangle:
+				// Check how much 'remain' is pointing out of the triangle:
 				float d = glm::dot(remain, in);
 				if (d < 0.0f) {
-					//bounce off of the wall:
+					// bounce off of the wall:
 					remain += (-1.25f * d) * in;
 				} else {
-					//if it's just pointing along the edge, bend slightly away from wall:
+					// If it's just pointing along the edge, bend slightly away from wall:
 					remain += 0.01f * d * in;
 				}
 			}
 		}
     }
 
-    // if (remain != glm::vec3(0.0f)) {
-    //     std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-    // }
-
-
+    // Update character positions according to walkmesh
     {
-		// update character mesh's position to respect walking
-        // glm::vec3 remain =player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-		// catball.ch_transform->position = player.transform->position;
+        player.transform->position = walkmesh->to_world_point(player.at);
+        // update character mesh's position to respect walking
+        if (game_characters[morph].ctype) {
+            game_characters[morph].ch_transform->position = player.transform->position;
+        } else {
+            game_characters[morph].ch_animate->transform->position = player.transform->position;
+        }
+        glm::vec3 pos = player.transform->position;
+        std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
+    }
+
+    // Perform animations and other in-game interactions
+    {
         if (morph == 0) {
-            // worm->transform->position.y += move.y;
-            // worm->transform->position.x += move.x;
-
-            // player.transform->position = worm->transform->position;
-
-            // camera->transform->position = worm->transform->position + camera_offset_pos;
-            // camera->transform->rotation = camera_offset_rot;
-
-            // float angle = (move.x*60.0f);
-            // worm->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
-
-            // if (!move.x && (worm->transform->rotation.w != -worm->transform->rotation.y)) {
-            //     worm->transform->rotation = startingRotation;
-            // }
-
-            // // Standard
-            worm.ch_animate->transform->position.y += remain.y;
-            worm.ch_animate->transform->position.x += remain.x;
-
-            player.transform->position = worm.ch_animate->transform->position;
-
-            // Walkmesh
-            // player.transform->position = walkmesh->to_world_point(player.at);
-
-            // // update character mesh's position to respect walking
-            // game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
-            
-
             // Animation
-            float angle = (remain.x*60.0f);
+            float angle = (animate_pos.x*60.0f);
             worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            if (!remain.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
+            if (!animate_pos.x && (worm.ch_animate->transform->rotation.w != -worm.ch_animate->transform->rotation.y)) {
                 worm.ch_animate->transform->rotation = worm.wstarting_rotation;
                 if (isFlipped){
                     worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(.0f, 0.0f, 1.0f)); 
@@ -538,7 +553,7 @@ void WormMode::update(float elapsed) {
 
             }
 
-            worm_animations[0].position += remain.y *0.8f;
+            worm_animations[0].position += animate_pos.y*0.8f;
             worm_animations[0].position -= std::floor(worm_animations[0].position);
 
             for (auto &anim : worm_animations) {
@@ -576,65 +591,46 @@ void WormMode::update(float elapsed) {
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
             game_characters[morph].ch_transform->position.z = currZ;
-
         }
-        if (morph == 2) {
-            // Standard
-            // remain.x *= elapsed;
-            // remain.y *= elapsed;
-            // rectangle.ch_transform->position.y += remain.y;
-            // rectangle.ch_transform->position.x += remain.x;
-            
-            // player.transform->position = rectangle.ch_transform->position;
-            
-            // Walkmesh
-            player.transform->position = walkmesh->to_world_point(player.at);
-
-            // update character mesh's position to respect walking
-            game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
-
+        else if (morph == 2) {
             flipped += 1;
         }
-        if (morph == 3) {
-            // Standard
-            if (isFlipped) {
-                blob.ch_transform->position.y += remain.y;
-                blob.ch_transform->position.x += remain.x;
-
-                if (justFlipped) {
-                    blob.ch_transform->position.z *= -1;
-                    blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-                    blob.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        else if (morph == 3) {
+            // Flip if inverted
+            if (justFlipped) {
+                blob.ch_animate->transform->position.z *= -1;
+                blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
                     // flip other characters too
-                    worm.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)); 
+                    for (auto &character : game_characters) {
+                        if (character.first != morph) {
+                            Character &ch = character.second;
+                            if (ch.ctype) {
+                                ch.ch_transform->position.z *= -1;
+                                ch.ch_transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } else {
+                                ch.ch_animate->transform->position.z *= -1;
+                                ch.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                            } 
+                        }
+                    }
+                    
                     
                     camera_offset_pos.z *= -1;
                     camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
                     justFlipped = false;
                 }
 
-                player.transform->position = blob.ch_transform->position;
-            } else {
-                // Walkmesh 
-                player.transform->position = walkmesh->to_world_point(player.at);
+            // Animation
+            blob_animations[0].position += abs(animate_pos.x) * 0.4f + abs(animate_pos.y) * 0.4f;
+            blob_animations[0].position -= std::floor(blob_animations[0].position);
 
-                if (justFlipped) {
-                    player.transform->position.z *= -1;
-                    player.transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-                    player.transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                    
-                    camera_offset_pos.z *= -1;
-                    camera_offset_rot = glm::angleAxis(glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f)) * camera_offset_rot;
-                    justFlipped = false;
-                }
-
-                // update character mesh's position to respect walking
-                game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
+            for (auto &anim : blob_animations) {
+                anim.update(elapsed);
             }
         }
 
-        // update camera location and rotation
+        // Update camera location and rotation
         camera->transform->rotation = player.transform->rotation * camera_offset_rot;
         camera->transform->position = (player.transform->position + (player.transform->rotation *camera_offset_pos));
     }
@@ -717,19 +713,30 @@ void WormMode::morphCharacter(bool forced) {
     if (old_morph != morph || forced) { 
         // Get position of previous active character
         glm::vec3 pos; 
+        glm::quat rot;
         Character old_ch = game_characters[old_morph];
         Character new_ch = game_characters[morph];
         if (old_ch.ctype) {
             pos = old_ch.ch_transform->position; 
+            rot = old_ch.ch_transform->rotation;
         } else {
             pos = old_ch.ch_animate->transform->position; 
+            rot = old_ch.ch_animate->transform->rotation;
         }
         
-        // Update position of new character
+        // Update position & rotation of new character
         if (new_ch.ctype) {
-            new_ch.ch_transform->position = pos; 
+            game_characters[morph].ch_transform->position = pos; 
+            game_characters[morph].ch_transform->rotation = rot;
+            game_characters[morph].cangle = old_ch.cangle;
+            new_ch.cangle = old_ch.cangle;
+            game_characters[morph].ch_transform->rotation = glm::angleAxis(new_ch.cangle, glm::vec3(0.0f,0.0f,1.0f));
         } else { 
             new_ch.ch_animate->transform->position = pos; 
+            // Instead of updating rotation of character, update cam rotation
+            camera->transform->rotation = cam_init_rot;
+            player.transform->rotation = start_rot;
+            new_ch.cangle = 0.0f;
         }
 
         // Move all morphs (characters) offscreen
