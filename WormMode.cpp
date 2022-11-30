@@ -24,36 +24,6 @@
 
 // ************************* PARTICLE **************************
 // particle reference: https://learnopengl.com/In-Practice/2D-Game/Particles
-glm::uvec2 size (500,500);
-std::vector< glm::u8vec4 > particle_texture_data;
-GLuint particle_program = gl_compile_program(
-    //vertex shader:
-    "#version 330 core\n"
-    "layout (location = 0) in vec4 vertex;\n"
-    "out vec2 TexCoords;\n"
-    "out vec4 ParticleColor;\n"
-    "uniform mat4 projection;\n"
-    "uniform vec2 offset;\n"
-    "uniform vec4 color;\n"
-    "void main() {\n"
-    "	float scale = 10.0f;\n"
-    "   TexCoords = vertex.zw;\n"
-    "   ParticleColor = color;\n"
-    "   gl_Position = projection * vec4((vertex.xy * scale) + offset, 0.0, 1.0);\n"
-    "}\n"
-,
-    //fragment shader:
-    "#version 330 core\n"
-    "in vec2 TexCoords;\n"
-    "in vec4 ParticleColor;\n"
-    "out vec4 color;\n"
-    "uniform sampler2D sprite;\n"
-    "void main() {\n"
-    "	color = (texture(sprite, TexCoords) * ParticleColor);\n"
-    "}\n"
-);
-
-GLuint SPRITE_sampler2D = glGetUniformLocation(particle_program, "sprite");
 
 int WormMode::firstUnusedParticle() {
     // first search from last used particle, this will usually return almost instantly
@@ -88,7 +58,7 @@ void WormMode::respawnParticle(Particle &particle, Character cur_char, glm::vec2
     particle.Position = glm::vec2(pos.x,pos.z) + glm::vec2(random) + offset;
     particle.Color = glm::vec4(rColor, rColor, rColor, 1.0f);
     particle.Life = 1.0f;
-    particle.Velocity =  glm::vec2(0.1f);
+    particle.Velocity =  glm::vec2(3.0f);
 }
 
 
@@ -158,6 +128,58 @@ Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 // ************************ WORM MODE **************************
 WormMode::WormMode() : scene(*worm_scene) {
     // PARTICLE SETUP ----------------------------------------------------------
+    particle_program = gl_compile_program(
+        //vertex shader:
+        "#version 330 core\n"
+        "layout (location = 0) in vec4 vertex;\n"
+        "out vec2 TexCoords;\n"
+        "out vec4 ParticleColor;\n"
+        "uniform mat4 projection;\n"
+        "uniform vec2 offset;\n"
+        "uniform vec4 color;\n"
+        "void main() {\n"
+        "	float scale = 10.0f;\n"
+        "   TexCoords = vertex.zw;\n"
+        "   ParticleColor = color;\n"
+        "   gl_Position = projection * vec4((vertex.xy * scale) + offset, 0.0, 1.0);\n"
+        "}\n"
+    ,
+        //fragment shader:
+        "#version 330 core\n"
+        "in vec2 TexCoords;\n"
+        "in vec4 ParticleColor;\n"
+        "out vec4 color;\n"
+        "uniform sampler2D sprite;\n"
+        "void main() {\n"
+        "	color = (texture(sprite, TexCoords) * ParticleColor);\n"
+        "}\n"
+    );
+
+    // GLuint SPRITE_sampler2D = glGetUniformLocation(particle_program, "sprite");
+
+    // set up mesh and attribute properties
+    unsigned int VBO;
+    float particle_quad[] = {
+        0.0f, 1.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+
+        0.0f, 1.0f, 0.0f, 1.0f,
+        1.0f, 1.0f, 1.0f, 1.0f,
+        1.0f, 0.0f, 1.0f, 0.0f
+    }; 
+    glGenVertexArrays(1, &particle_vao);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(particle_vao);
+    // fill mesh buffer
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
+    // set mesh attributes
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glBindVertexArray(0);
+
+
     load_png("dist/particle.png", &size, &particle_texture_data, LowerLeftOrigin);
     for (unsigned int i = 0; i < total_particles; ++i){
         particles.push_back(Particle());
@@ -773,7 +795,6 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
             glGenTextures(1, &particle_texture);
             glBindTexture(GL_TEXTURE_2D, particle_texture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 500, 500, 0, GL_RGB, GL_UNSIGNED_BYTE, &particle_texture_data);
-            glGenerateMipmap(GL_TEXTURE_2D);
 
             glGenVertexArrays(1, &particle_vao);
             glBindVertexArray(particle_vao);

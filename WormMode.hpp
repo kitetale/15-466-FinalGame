@@ -58,6 +58,9 @@ struct WormMode : public Mode {
 	glm::vec2 particle_offset = glm::vec2(1.5f);
 	GLuint particle_vao = 0;
 	GLuint particle_texture;
+	GLuint particle_program = 0;
+	std::vector< glm::u8vec4 > particle_texture_data;
+	glm::uvec2 size = glm::uvec2 (500,500);
 
 	// In-game attributes: 
 	glm::vec3 start_pos = glm::vec3(0.0f,0.0f,0.0f);
