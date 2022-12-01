@@ -93,7 +93,7 @@ struct WormMode : public Mode {
 
 
 	// 1: catball
-	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
+	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f};
 	int jumpNum = 0;
 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
 	float floorZ = 0.0f;

@@ -420,6 +420,53 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
     }
+    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+        camera->fovy = glm::radians(60.0f);
+        camera->near = 0.01f;
+        camera->transform->position = camera_offset_pos;
+
+        player.transform->position = start_pos;
+        player.at = walkmesh->nearest_walk_point(player.transform->position);
+
+        //rotate camera facing direction (-z) to player facing direction (+y):
+        camera->transform->rotation = camera_offset_rot;
+
+        Character ch = game_characters[morph];
+        if (ch.ctype) {
+            game_characters[morph].ch_transform->position = start_pos; 
+            game_characters[morph].ch_transform->rotation = start_rot;
+        } else { 
+            game_characters[morph].ch_animate->transform->position = start_pos; 
+        }
+        camera->transform->rotation = cam_init_rot;
+        player.transform->rotation = start_rot;
+        game_characters[morph].cangle = 0.0f;
+        return true;
+    }
+    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+        camera->fovy = glm::radians(60.0f);
+        camera->near = 0.01f;
+        camera->transform->position = camera_offset_pos;
+
+        player.transform->position = start_pos;
+        player.at = walkmesh->nearest_walk_point(player.transform->position);
+
+        //rotate camera facing direction (-z) to player facing direction (+y):
+        camera->transform->rotation = camera_offset_rot;
+
+        Character ch = game_characters[morph];
+        if (ch.ctype) {
+            game_characters[morph].ch_transform->position = start_pos; 
+            game_characters[morph].ch_transform->rotation = start_rot;
+        } else { 
+            game_characters[morph].ch_animate->transform->position = start_pos; 
+        }
+        camera->transform->rotation = cam_init_rot;
+        player.transform->rotation = start_rot;
+        game_characters[morph].cangle = 0.0f;
+        return true;
+    }
+
 	return false;
 }
 
@@ -435,7 +482,7 @@ void WormMode::update(float elapsed) {
         if (morph == 0) {
             float step = 0.0f;
             float sideways = 0.0f;
-            float speedForward = 1.0f;
+            float speedForward = 2.5f;
             float speedSideways = 12.0f;
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -470,6 +517,13 @@ void WormMode::update(float elapsed) {
             if (!left && right) move.x = 1.0f*dir;
             if (backward && !forward) move.y =-1.0f;
             if (!backward && forward) move.y = 1.0f;
+            float PlayerSpeed = 4.0f * accel;
+            if (jumpDir == 1.0f) {
+                accel = 0.98f;
+            } else {
+                accel= 1.05f;
+            }
+            moveZ = jumpDir * PlayerSpeed * elapsed;
 
             // Make it so that moving diagonally doesn't go faster:
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
@@ -486,7 +540,7 @@ void WormMode::update(float elapsed) {
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * 2.0f * PlayerSpeed * elapsed;
 
         } else if (morph == 3) {
-            float PlayerSpeed = 4.0f;
+            float PlayerSpeed = 6.0f;
 
             float dir = isFlipped ? -1.0f : 1.0f;
 
