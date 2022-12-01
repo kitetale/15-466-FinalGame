@@ -144,6 +144,7 @@ const game_names = [
 	maek.CPP('load_wav.cpp'),
 	maek.CPP('load_opus.cpp'),
 	maek.CPP('WormMode.cpp'),
+	maek.CPP('TutorialMode.cpp'),
 	maek.CPP('SplashScreenMode.cpp'),
 	maek.CPP('BoneAnimation.cpp'),
 	maek.CPP('BoneLitColorTextureProgram.cpp')

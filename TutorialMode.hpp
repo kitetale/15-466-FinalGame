@@ -19,9 +19,9 @@
 
 #include "TextRendering.hpp"
 
-struct WormMode : public Mode {
-	WormMode();
-	virtual ~WormMode();
+struct TutorialMode : public Mode {
+	TutorialMode();
+	virtual ~TutorialMode();
 
 	virtual bool handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) override;
 	virtual void update(float elapsed) override;
@@ -84,16 +84,8 @@ struct WormMode : public Mode {
 	std::vector< BoneAnimationPlayer > blob_animations;
 	std::vector< BoneAnimationPlayer > rect_animations;
 
-// 	// 1: catball
-// 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
-// 	int jumpNum = 0;
-// 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
-// 	float floorZ = 0.0f;
-// 	float accel = 1.0f;
-
-
 	// 1: catball
-	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f};
+	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
 	int jumpNum = 0;
 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
 	float floorZ = 0.0f;
@@ -131,4 +123,34 @@ struct WormMode : public Mode {
 	float main_text_size = 0.3f;
     glm::vec3 main_text_color = glm::vec3(1.0f, 1.0f, 1.0f);
 	glm::vec3 win_text_color = glm::vec3(0.0f, 1.0f, 0.1f);
+    glm::vec3 dark_text_color = glm::vec3(0.0f, 0.0f, 0.0f);
+
+
+
+    // Tutorial Mode:
+    int stage = 0;
+    // stage 0: starter text
+    // TODO: CHANGE THIS TEXT
+    std::string intro_text = "Welcome to Morphology Mania. Inspired by the East Asian folklore of shapeshifting, our character is lost in a foreign village and must embark on a quest to collect the magical beads that have the power to bring him home. To do so, he must morph into various shapes and sizes to avoid obstacles and unleash hidden abilities to make his way back to his village.";
+    float time_elapsed;
+	//lerp copied from https://graphicscompendium.com/opengl/22-interpolation
+    static glm::vec3 lerp(glm::vec3 x, glm::vec3 y, float t) {
+        return x * (1.f - t) + y * t;
+    }
+
+    // stage 1: pan scene
+
+    // stage 2: show morph 0 (worm)
+
+    // stage 3: movement
+
+    // stage 4: show morph 1 (catball)
+
+    // stage 5: show morph 2 (rectangle)
+
+    // stage 6: spheres
+
+    // stage 7: show morph 3 (blob)
+
+    // stage 8: invert world
 };

@@ -1,7 +1,7 @@
 #include "SplashScreenMode.hpp"
 
 #include "WormMode.hpp"
-// #include "TutorialMode.hpp"
+#include "TutorialMode.hpp"
 #include "LitColorTextureProgram.hpp"
 #include "BoneLitColorTextureProgram.hpp"
 #include "DrawLines.hpp"
@@ -56,8 +56,7 @@ void SplashScreenMode::update(float elapsed) {
         press_elapsed += elapsed;
         if (press_elapsed > 1) {
             if (level == 0) {
-                // Mode::set_current(std::make_shared< TutorialMode >());
-                Mode::set_current(std::make_shared< SplashScreenMode >());
+                Mode::set_current(std::make_shared< TutorialMode >());
             }
             else if (level == 1) {
                 Mode::set_current(std::make_shared< WormMode >());
