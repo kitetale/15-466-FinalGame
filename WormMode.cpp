@@ -38,6 +38,13 @@ Load< BoneAnimation > worm_banims(LoadTagDefault, [](){
 	return ret;
 });
 
+BoneAnimation::Animation const *rect_banim_moveY = nullptr;
+Load< BoneAnimation > rect_banims(LoadTagDefault, [](){
+	auto ret = new BoneAnimation(data_path("rect.banims"));
+	rect_banim_moveY = &(ret->lookup("MoveY"));
+	return ret;
+});
+
 BoneAnimation::Animation const *blob_banim_walk = nullptr;
 BoneAnimation::Animation const *blob_banim_flip = nullptr;
 Load< BoneAnimation > blob_banims(LoadTagDefault, [](){
@@ -49,6 +56,10 @@ Load< BoneAnimation > blob_banims(LoadTagDefault, [](){
 
 Load< GLuint > worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
 	return new GLuint(worm_banims->make_vao_for_program(bone_lit_color_texture_program->program));
+});
+
+Load< GLuint > rect_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
+	return new GLuint(rect_banims->make_vao_for_program(bone_lit_color_texture_program->program));
 });
 
 Load< GLuint > blob_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
@@ -94,7 +105,7 @@ WormMode::WormMode() : scene(*worm_scene) {
         //get character mesh
         for (auto &transform : scene.transforms) {
             if (transform.name == "Catball") catball.ch_transform = &transform;
-            if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
+            //if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
             //if (transform.name == "Blob") blob.ch_transform = &transform;
             if (transform.name.substr(0, transform.name.size()-1) == "bead") {
                 beads.push_back(&transform);
@@ -132,7 +143,6 @@ WormMode::WormMode() : scene(*worm_scene) {
 
     // Worm animation setup ----------------------------------------------------
 	{ 
-        // Put some worms around the edge:
 		Scene::Drawable::Pipeline worm_info;
 		worm_info = bone_lit_color_texture_program_pipeline;
 
@@ -166,6 +176,43 @@ WormMode::WormMode() : scene(*worm_scene) {
         worm.ch_animate->transform->position =  glm::vec3(0.0f);
         worm.ctype = false; 
         worm.wstarting_rotation = worm.ch_animate->transform->rotation; 
+	}
+
+    // Rect animation setup ----------------------------------------------------
+	{ 
+		Scene::Drawable::Pipeline rect_info;
+		rect_info = bone_lit_color_texture_program_pipeline;
+
+		rect_info.vao = *rect_banims_for_bone_lit_color_texture_program;
+		rect_info.start = rect_banims->mesh.start;
+		rect_info.count = rect_banims->mesh.count;
+
+        // Add move y animation to rect_animations list
+		rect_animations.reserve(1);
+        rect_animations.emplace_back(*rect_banims, *rect_banim_moveY, BoneAnimationPlayer::Loop, 0.0f);
+
+        BoneAnimationPlayer *rectAnimation = &rect_animations.back();
+    
+        rect_info.set_uniforms = [rectAnimation](){
+            rectAnimation->set_uniform(bone_lit_color_texture_program->BONES_mat4x3_array);
+        };
+
+        assert(rect_animations.size() == 1);
+
+        scene.transforms.emplace_back();
+        Scene::Transform *transform = &scene.transforms.back();
+        transform->position.x = 0.0f;
+        transform->position.y = 0.0f;
+        transform->rotation = glm::angleAxis(glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        scene.drawables.emplace_back(transform);
+        Scene::Drawable *rect1 = &scene.drawables.back();
+        rect1->pipeline = rect_info;
+
+        // Initialize rectangle
+        this->rectangle.ch_animate = rect1;
+        rectangle.ch_animate->transform->position =  glm::vec3(0.0f);
+        rectangle.ctype = false;
+        rectangle.wstarting_rotation = rectangle.ch_animate->transform->rotation;  
 	}
 
     // Blob animation setup ----------------------------------------------------
@@ -393,74 +440,18 @@ void WormMode::update(float elapsed) {
 
             // Make it so that moving diagonally doesn't go faster:
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-        } else if (morph == 2 && flipped < 1) {
+        } else if (morph == 2) {
             float dir = isFlipped ? -1.0f : 1.0f;
-            if (left && !right) {
-                move.x =-2.0f*dir;
-                rectangle.count += 1;
-                if (rectangle.count % 7 == 1){
-                    if (isTallSide) {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                        move.z = -1.0f;
-                    } else {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        move.z = 1.0f;
-                    }
-                }
-            }
-            if (!left && right) {
-                move.x = 2.0f*dir;
-                rectangle.count += 1;
-                if (rectangle.count % 7 == 1){
-                    if (isTallSide) {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.707107f, 0.0f, 0.707107f);
-                        move.z = -1.0f;
-                        
-                    } else {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        move.z = 1.0f;
-                    }
-                }
-            }
-            if (backward && !forward) {
-                move.y =-2.0f;
-                rectangle.count += 1;
-                if (rectangle.count % 7 == 1){
-                    if (isTallSide) {
-                        rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                        move.z = -1.0f;
-                        
-                    } else {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        move.z = 1.0f;
-                    }
-                }
-            }
-            if (!backward && forward) {
-                move.y = 2.0f;
-                rectangle.count += 1;
-                if (rectangle.count % 7 == 1){
-                    if (isTallSide) {
-                        rectangle.ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.5f, 0.5f, -0.5f, 0.5f);
-                        move.z = -1.0f;
-                        
-                    } else {
-                        rectangle.ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        game_characters[2].ch_transform->rotation = glm::quat(0.0f, 0.0f, 0.0f, 1.0f);
-                        move.z = 1.0f;
-                    }
-                }
-            }
+            float PlayerSpeed = 10.0f;
 
-            isTallSide = !isTallSide;
-            game_characters[2].isTallSide = !game_characters[2].isTallSide;
+            if (left && !right) move.x =-1.0f * dir;
+            if (!left && right) move.x = 1.0f * dir;
+            if (backward && !forward) move.y =-1.0f;
+            if (!backward && forward) move.y = 1.0f;
+
+            // Make it so that moving diagonally doesn't go faster:
+            if (move != glm::vec3(0.0f)) move = glm::normalize(move) * 2.0f * PlayerSpeed * elapsed;
+
         } else if (morph == 3) {
             float PlayerSpeed = 4.0f;
 
@@ -591,7 +582,45 @@ void WormMode::update(float elapsed) {
             game_characters[morph].ch_transform->position.z = currZ;
         }
         else if (morph == 2) {
-            flipped += 1;
+            // Animation
+            rectangle.ch_animate->transform->position.z = 1.0f;
+            rect_animations[0].position += abs(animate_pos.x)* 0.4f  + abs(animate_pos.y)* 0.4f ;
+            rect_animations[0].position -= std::floor(rect_animations[0].position);
+            // std::cout<<"animation pos: "<<rect_animations[0].position<<std::endl;
+
+            if (animate_pos.x == 0.0f && animate_pos.y == 0.0f){
+                rectangle.ch_animate->transform->rotation = 
+                    rectangle.wstarting_rotation;
+            }
+            
+            if (animate_pos.x != 0.0f || animate_pos.y != 0.0f){
+                float prev = std::floor(rectRot);
+                rectRot += elapsed*10.0f;
+                float cur = std::floor(rectRot)-prev;
+                if (animate_pos.x != 0.0f){
+                    if (animate_pos.x < 0.0f) {
+                        rectangle.ch_animate->transform->rotation *= 
+                        glm::angleAxis(-cur*10.0f, glm::vec3(0.0f,1.0f,0.0f));
+                    } else {
+                        rectangle.ch_animate->transform->rotation *= 
+                        glm::angleAxis(cur*10.0f, glm::vec3(0.0f,1.0f,0.0f));
+                    }
+                } else {
+                    glm::vec3 prevPos = rectangle.ch_animate->transform->position;
+                    rectangle.ch_animate->transform->position = glm::vec3(0.0f,0.0f,0.0f);
+                    rectangle.ch_animate->transform->rotation *= 
+                        glm::angleAxis(cur*10.0f, glm::vec3(0.0f,0.0f,1.0f));
+                    rectangle.ch_animate->transform->position = prevPos;
+                }
+            }
+            
+            
+            
+
+
+            for (auto &anim : rect_animations) {
+                anim.update(elapsed);
+            }
         }
         else if (morph == 3) {
             // Flip if inverted

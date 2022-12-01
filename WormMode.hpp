@@ -32,7 +32,7 @@ struct WormMode : public Mode {
 	bool forward = false;
 	bool backward = false;
    	bool left = false;
-    	bool right = false;
+    bool right = false;
 
 	// Camera 
 	Scene::Camera *camera = nullptr;
@@ -73,8 +73,6 @@ struct WormMode : public Mode {
 		float cangle = 0.0f; // character's rotation angle based on mouse move
 		bool ctype = true; // true if standard false if animated
 		glm::quat wstarting_rotation; 
-		bool isTallSide = true; // rectangle only 
-		int64_t count = 0; // rectangle only
 	} worm, catball, rectangle, blob;
 	std::unordered_map<int, Character> game_characters; 
 
@@ -84,6 +82,7 @@ struct WormMode : public Mode {
 	// 0: worm
 	std::vector< BoneAnimationPlayer > worm_animations;
 	std::vector< BoneAnimationPlayer > blob_animations;
+	std::vector< BoneAnimationPlayer > rect_animations;
 
 // 	// 1: catball
 // 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
@@ -102,8 +101,8 @@ struct WormMode : public Mode {
 	float currZ = 0.0f;
 	float moveZ = 0.0f;
 
-	// 2: rectangle only
-	bool isTallSide = true; 
+	// 2: rectangle
+	float rectRot = 0.0f;
 
 	// 3: flipping sphere
 	bool justFlipped = false;
