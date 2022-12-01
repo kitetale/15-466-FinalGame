@@ -105,7 +105,7 @@ WormMode::WormMode() : scene(*worm_scene) {
         //get character mesh
         for (auto &transform : scene.transforms) {
             if (transform.name == "Catball") catball.ch_transform = &transform;
-            //if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
+            if (transform.name == "Rectangle") rectangle.ch_transform = &transform;
             //if (transform.name == "Blob") blob.ch_transform = &transform;
             if (transform.name.substr(0, transform.name.size()-1) == "bead") {
                 beads.push_back(&transform);
@@ -270,6 +270,7 @@ WormMode::WormMode() : scene(*worm_scene) {
                 } 
             }
         }
+        rectangle.ch_transform->position = character_off_pos;
     }
 
 }
@@ -592,12 +593,17 @@ void WormMode::update(float elapsed) {
                 rectangle.ch_animate->transform->rotation = 
                     rectangle.wstarting_rotation;
             }
-            
+
             if (animate_pos.x != 0.0f || animate_pos.y != 0.0f){
                 float prev = std::floor(rectRot);
                 rectRot += elapsed*10.0f;
                 float cur = std::floor(rectRot)-prev;
                 if (animate_pos.x != 0.0f){
+                    xDir = true;
+                    if (xDir != prevDir) {
+                        rectangle.ch_animate->transform->rotation = rectangle.wstarting_rotation;
+                        prevDir = xDir;
+                    }
                     if (animate_pos.x < 0.0f) {
                         rectangle.ch_animate->transform->rotation *= 
                         glm::angleAxis(-cur*10.0f, glm::vec3(0.0f,1.0f,0.0f));
@@ -606,6 +612,11 @@ void WormMode::update(float elapsed) {
                         glm::angleAxis(cur*10.0f, glm::vec3(0.0f,1.0f,0.0f));
                     }
                 } else {
+                    xDir = false;
+                    if (xDir != prevDir) {
+                        rectangle.ch_animate->transform->rotation = rectangle.wstarting_rotation;
+                        prevDir = xDir;
+                    }
                     glm::vec3 prevPos = rectangle.ch_animate->transform->position;
                     rectangle.ch_animate->transform->position = glm::vec3(0.0f,0.0f,0.0f);
                     rectangle.ch_animate->transform->rotation *= 
@@ -613,9 +624,6 @@ void WormMode::update(float elapsed) {
                     rectangle.ch_animate->transform->position = prevPos;
                 }
             }
-            
-            
-            
 
 
             for (auto &anim : rect_animations) {

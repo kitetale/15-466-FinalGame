@@ -103,7 +103,8 @@ struct WormMode : public Mode {
 
 	// 2: rectangle
 	float rectRot = 0.0f;
-
+	bool xDir = false;
+	bool prevDir = false;
 	// 3: flipping sphere
 	bool justFlipped = false;
 	bool isFlipped = false;
