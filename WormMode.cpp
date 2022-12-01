@@ -625,6 +625,16 @@ void WormMode::update(float elapsed) {
                 }
             }
 
+            // Walkmesh
+            player.transform->position = walkmesh->to_world_point(player.at);
+           
+
+            // update character mesh's position to respect walking
+            game_characters[morph].ch_animate->transform->position = walkmesh->to_world_point(player.at);
+
+
+            game_characters[morph].ch_animate->transform->position += walkmesh->to_world_triangle_normal(player.at);
+
 
             for (auto &anim : rect_animations) {
                 anim.update(elapsed);
