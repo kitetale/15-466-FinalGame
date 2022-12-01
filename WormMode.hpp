@@ -118,13 +118,17 @@ struct WormMode : public Mode {
 	size_t num_beads; 
 
 	// Lives and collisions 
-	uint8_t num_lives = 3; 
+	uint8_t num_lives = 3;
 	std::vector < Scene::Transform* > obstacles;
+	
+	// Timing
+	float game_time = 0.0f;
 
 	// Font
-	TextRenderer *rubik_renderer = new TextRenderer(data_path("fonts/RubikDirt-Regular.ttf"), 200);
-	TextRenderer *main_text_renderer = rubik_renderer;
+	TextRenderer *mansalva_renderer = new TextRenderer(data_path("fonts/Mansalva-Regular.ttf"), 200);
+	TextRenderer *main_text_renderer = mansalva_renderer;
 
 	float main_text_size = 0.3f;
     glm::vec3 main_text_color = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 win_text_color = glm::vec3(0.0f, 1.0f, 0.1f);
 };

@@ -14,6 +14,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -357,7 +358,30 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
             isFlipped = !isFlipped;
         }
         return true;
-    } 
+    }
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) { // to reset to initial position
+        camera->fovy = glm::radians(60.0f);
+        camera->near = 0.01f;
+        camera->transform->position = camera_offset_pos;
+
+        player.transform->position = start_pos;
+        player.at = walkmesh->nearest_walk_point(player.transform->position);
+
+        //rotate camera facing direction (-z) to player facing direction (+y):
+        camera->transform->rotation = camera_offset_rot;
+
+        Character ch = game_characters[morph];
+        if (ch.ctype) {
+            game_characters[morph].ch_transform->position = start_pos; 
+            game_characters[morph].ch_transform->rotation = start_rot;
+        } else { 
+            game_characters[morph].ch_animate->transform->position = start_pos; 
+        }
+        camera->transform->rotation = cam_init_rot;
+        player.transform->rotation = start_rot;
+        game_characters[morph].cangle = 0.0f;
+        return true;
+    }
     if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE) {
         SDL_SetRelativeMouseMode(SDL_FALSE);
         return true;
@@ -400,6 +424,8 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void WormMode::update(float elapsed) {
+    game_time += elapsed;
+    
     // Change character if input provided 
     this->morphCharacter(false); 
 
@@ -431,8 +457,14 @@ void WormMode::update(float elapsed) {
             move.y = step;
         }
         else if (morph == 1) {
-            float PlayerSpeed = 12.0f;
+            float PlayerSpeed = 4.0f * accel;
             float dir = isFlipped ? -1.0f : 1.0f;
+            if (jumpDir == 1.0f) {
+                accel *= 0.98f;
+            } else {
+                accel *= 1.05f;
+            }
+            moveZ = jumpDir * PlayerSpeed * elapsed;
 
             if (left && !right) move.x =-1.0f*dir;
             if (!left && right) move.x = 1.0f*dir;
@@ -524,8 +556,8 @@ void WormMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
-        glm::vec3 pos = player.transform->position;
-        std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
+        // glm::vec3 pos = player.transform->position;
+        // std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
     }
 
     // Perform animations and other in-game interactions
@@ -558,19 +590,37 @@ void WormMode::update(float elapsed) {
             // player.transform->position = catball.ch_transform->position;
 
            
-            currZ += moveZ;
-            if (currZ > jumpDist.at(jumpNum) + floorZ) {
-                float extra = currZ - (jumpDist.at(jumpNum) + floorZ);
-                currZ = (jumpDist.at(jumpNum) + floorZ) - extra;
-                jumpDir = -1.0f;
-            }
-            if (currZ < floorZ) {
-                float extra = floorZ - currZ;
-                currZ = floorZ + extra;
-                jumpDir = 1.0f;
-                jumpNum = (jumpNum + 1) % 4;
-                if (jumpNum == 0) {
-                    accel = 1.0f;
+            if (isFlipped) {
+                currZ -= moveZ;
+                if (currZ < (-1 * (jumpDist.at(jumpNum) + floorZ))) {
+                    float extra = abs(currZ - (-1 * (jumpDist.at(jumpNum) + floorZ)));
+                    currZ = (-1 * (jumpDist.at(jumpNum) + floorZ)) + extra;
+                    jumpDir = -1.0f;
+                }
+                if (currZ > floorZ) {
+                    float extra = abs(floorZ - currZ);
+                    currZ = floorZ - extra;
+                    jumpDir = 1.0f;
+                    jumpNum = (jumpNum + 1) % 4;
+                    if (jumpNum == 0) {
+                        accel = 1.0f;
+                    }
+                }
+            } else {
+                currZ += moveZ;
+                if (currZ > jumpDist.at(jumpNum) + floorZ) {
+                    float extra = currZ - (jumpDist.at(jumpNum) + floorZ);
+                    currZ = (jumpDist.at(jumpNum) + floorZ) - extra;
+                    jumpDir = -1.0f;
+                }
+                if (currZ < floorZ) {
+                    float extra = floorZ - currZ;
+                    currZ = floorZ + extra;
+                    jumpDir = 1.0f;
+                    jumpNum = (jumpNum + 1) % 4;
+                    if (jumpNum == 0) {
+                        accel = 1.0f;
+                    }
                 }
             }
 
@@ -685,6 +735,19 @@ void WormMode::update(float elapsed) {
 }
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
+    if (num_beads <= 8) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        main_text_renderer->set_drawable_size(drawable_size);
+        glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+        float size_ratio = drawable_size.y / 1200.0f;
+
+        main_text_renderer->renderText("You Win", center.x - 450.0f * size_ratio, center.y - 50.0f * size_ratio, 1.2f * size_ratio, win_text_color);
+        main_text_renderer->renderText("Press ENTER to Play Again", center.x - 625.0f * size_ratio, 150.0f * size_ratio, 0.5f * size_ratio, main_text_color);
+        return;
+    }
+
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
@@ -725,7 +788,9 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
         float size_ratio = drawable_size.y / 1200.0f;
 
         main_text_renderer->renderText("beads remaining: " + std::to_string(num_beads), 50.0f, 50.0f, main_text_size * size_ratio, main_text_color);
-        main_text_renderer->renderText("lives remaining: " + std::to_string(num_lives), drawable_size.x - 600.0f * size_ratio, 50.0f, main_text_size * size_ratio, main_text_color);
+        std::string new_time = std::to_string(game_time);
+        std::size_t pos = new_time.find(".");
+        main_text_renderer->renderText("time: " + new_time.substr(0,pos+3), drawable_size.x - 350.0f * size_ratio, 50.0f, main_text_size * size_ratio, main_text_color);
     }
 
     { //use DrawLines to overlay some text:
@@ -791,6 +856,12 @@ void WormMode::morphCharacter(bool forced) {
             if (ch_num != morph) {
                 if (ch.ctype) {
                     ch.ch_transform->position = character_off_pos;
+                    if (character.first == 1) {
+                        currZ = 0.0f;
+                        accel = 1.0f;
+                        jumpNum = 0;
+                        jumpDir = 1.0f;
+                    }
                 } else {
                     ch.ch_animate->transform->position = character_off_pos;
                 } 
