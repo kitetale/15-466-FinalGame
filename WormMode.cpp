@@ -456,7 +456,7 @@ void WormMode::update(float elapsed) {
         if (morph == 0) {
             float step = 0.0f;
             float sideways = 0.0f;
-            float speedForward = 1.0f;
+            float speedForward = 2.5f;
             float speedSideways = 12.0f;
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -507,7 +507,7 @@ void WormMode::update(float elapsed) {
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * 2.0f * PlayerSpeed * elapsed;
 
         } else if (morph == 3) {
-            float PlayerSpeed = 4.0f;
+            float PlayerSpeed = 6.0f;
 
             float dir = isFlipped ? -1.0f : 1.0f;
 
