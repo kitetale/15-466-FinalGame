@@ -517,14 +517,6 @@ void WormMode::update(float elapsed) {
             if (!left && right) move.x = 1.0f*dir;
             if (backward && !forward) move.y =-1.0f;
             if (!backward && forward) move.y = 1.0f;
-            float PlayerSpeed = 4.0f * accel;
-            if (jumpDir == 1.0f) {
-                accel = 0.98f;
-            } else {
-                accel= 1.05f;
-            }
-            moveZ = jumpDir * PlayerSpeed * elapsed;
-
             // Make it so that moving diagonally doesn't go faster:
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
         } else if (morph == 2) {
@@ -789,7 +781,7 @@ void WormMode::update(float elapsed) {
 }
 
 void WormMode::draw(glm::uvec2 const &drawable_size) {
-    if (num_beads <= 8) {
+    if (num_beads <= 0) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
