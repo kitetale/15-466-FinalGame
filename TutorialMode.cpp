@@ -1,5 +1,6 @@
-#include "WormMode.hpp"
+#include "TutorialMode.hpp"
 
+#include "WormMode.hpp"
 #include "LitColorTextureProgram.hpp"
 #include "BoneLitColorTextureProgram.hpp"
 #include "DrawLines.hpp"
@@ -23,62 +24,62 @@
 #include <unordered_map>
 
 // ************************* MESH ******************************
-GLuint worm_meshes_for_lit_color_texture_program = 0;
-Load< MeshBuffer > worm_meshes(LoadTagDefault, [](){
+GLuint tutorial_worm_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > tutorial_worm_meshes(LoadTagDefault, [](){
 	// auto ret = new MeshBuffer(data_path("worm.pnct"));
     auto ret = new MeshBuffer(data_path("level.pnct"));
-    worm_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+    tutorial_worm_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 // ************************ ANIMATION **************************
-BoneAnimation::Animation const *worm_banim_crawl = nullptr;
-Load< BoneAnimation > worm_banims(LoadTagDefault, [](){
+BoneAnimation::Animation const *tutorial_worm_banim_crawl = nullptr;
+Load< BoneAnimation > tutorial_worm_banims(LoadTagDefault, [](){
 	auto ret = new BoneAnimation(data_path("level.banims"));
-	worm_banim_crawl = &(ret->lookup("Crawl"));
+	tutorial_worm_banim_crawl = &(ret->lookup("Crawl"));
 	return ret;
 });
 
-BoneAnimation::Animation const *rect_banim_moveY = nullptr;
-Load< BoneAnimation > rect_banims(LoadTagDefault, [](){
+BoneAnimation::Animation const *tutorial_rect_banim_moveY = nullptr;
+Load< BoneAnimation > tutorial_rect_banims(LoadTagDefault, [](){
 	auto ret = new BoneAnimation(data_path("rect.banims"));
-	rect_banim_moveY = &(ret->lookup("MoveY"));
+	tutorial_rect_banim_moveY = &(ret->lookup("MoveY"));
 	return ret;
 });
 
-BoneAnimation::Animation const *blob_banim_walk = nullptr;
-BoneAnimation::Animation const *blob_banim_flip = nullptr;
-Load< BoneAnimation > blob_banims(LoadTagDefault, [](){
+BoneAnimation::Animation const *tutorial_blob_banim_walk = nullptr;
+BoneAnimation::Animation const *tutorial_blob_banim_flip = nullptr;
+Load< BoneAnimation > tutorial_blob_banims(LoadTagDefault, [](){
 	auto ret = new BoneAnimation(data_path("blob.banims"));
-	blob_banim_walk = &(ret->lookup("Walk"));
-	blob_banim_flip = &(ret->lookup("Flip"));
+	tutorial_blob_banim_walk = &(ret->lookup("Walk"));
+	tutorial_blob_banim_flip = &(ret->lookup("Flip"));
 	return ret;
 });
 
-Load< GLuint > worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
-	return new GLuint(worm_banims->make_vao_for_program(bone_lit_color_texture_program->program));
+Load< GLuint > tutorial_worm_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
+	return new GLuint(tutorial_worm_banims->make_vao_for_program(bone_lit_color_texture_program->program));
 });
 
-Load< GLuint > rect_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
-	return new GLuint(rect_banims->make_vao_for_program(bone_lit_color_texture_program->program));
+Load< GLuint > tutorial_rect_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
+	return new GLuint(tutorial_rect_banims->make_vao_for_program(bone_lit_color_texture_program->program));
 });
 
-Load< GLuint > blob_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
-	return new GLuint(blob_banims->make_vao_for_program(bone_lit_color_texture_program->program));
+Load< GLuint > tutorial_blob_banims_for_bone_lit_color_texture_program(LoadTagDefault, [](){
+	return new GLuint(tutorial_blob_banims->make_vao_for_program(bone_lit_color_texture_program->program));
 });
 
 // ************************** SCENE ****************************
-Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
+Load< Scene > tutorial_worm_scene(LoadTagDefault, []() -> Scene const * {
 	// return new Scene(data_path("worm.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
     return new Scene(data_path("level.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
-		Mesh const &mesh = worm_meshes->lookup(mesh_name);
+		Mesh const &mesh = tutorial_worm_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
 
 		drawable.pipeline = lit_color_texture_program_pipeline;
 
-		drawable.pipeline.vao = worm_meshes_for_lit_color_texture_program;
+		drawable.pipeline.vao = tutorial_worm_meshes_for_lit_color_texture_program;
 		drawable.pipeline.type = mesh.type;
 		drawable.pipeline.start = mesh.start;
 		drawable.pipeline.count = mesh.count;
@@ -87,16 +88,16 @@ Load< Scene > worm_scene(LoadTagDefault, []() -> Scene const * {
 });
 
 // *************************** WALK MESH ***********************
-WalkMesh const *walkmesh = nullptr;
-Load< WalkMeshes > worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+WalkMesh const *tutorial_walkmesh = nullptr;
+Load< WalkMeshes > tutorial_worm_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	// WalkMeshes *ret = new WalkMeshes(data_path("worm.w"));
     WalkMeshes *ret = new WalkMeshes(data_path("level.w"));
-	walkmesh = &ret->lookup("WalkMesh");
+	tutorial_walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
 
 // ************************ WORM MODE **************************
-WormMode::WormMode() : scene(*worm_scene) {
+TutorialMode::TutorialMode() : scene(*tutorial_worm_scene) {
     // MESH & WALKMESH SETUP ---------------------------------------------------
     {
         //create a player transform:
@@ -138,7 +139,7 @@ WormMode::WormMode() : scene(*worm_scene) {
             player.transform->position = start_pos;
 	        catball.ch_transform->position = start_pos;
             //start player walking at nearest walk point:
-            player.at = walkmesh->nearest_walk_point(player.transform->position);
+            player.at = tutorial_walkmesh->nearest_walk_point(player.transform->position);
         }
     }
 
@@ -147,13 +148,13 @@ WormMode::WormMode() : scene(*worm_scene) {
 		Scene::Drawable::Pipeline worm_info;
 		worm_info = bone_lit_color_texture_program_pipeline;
 
-		worm_info.vao = *worm_banims_for_bone_lit_color_texture_program;
-		worm_info.start = worm_banims->mesh.start;
-		worm_info.count = worm_banims->mesh.count;
+		worm_info.vao = *tutorial_worm_banims_for_bone_lit_color_texture_program;
+		worm_info.start = tutorial_worm_banims->mesh.start;
+		worm_info.count = tutorial_worm_banims->mesh.count;
 
         // Add crawl animation to worm_animations list
 		worm_animations.reserve(1);
-        worm_animations.emplace_back(*worm_banims, *worm_banim_crawl, BoneAnimationPlayer::Loop, 0.0f);
+        worm_animations.emplace_back(*tutorial_worm_banims, *tutorial_worm_banim_crawl, BoneAnimationPlayer::Loop, 0.0f);
 
         BoneAnimationPlayer *wormAnimation = &worm_animations.back();
     
@@ -184,13 +185,13 @@ WormMode::WormMode() : scene(*worm_scene) {
 		Scene::Drawable::Pipeline rect_info;
 		rect_info = bone_lit_color_texture_program_pipeline;
 
-		rect_info.vao = *rect_banims_for_bone_lit_color_texture_program;
-		rect_info.start = rect_banims->mesh.start;
-		rect_info.count = rect_banims->mesh.count;
+		rect_info.vao = *tutorial_rect_banims_for_bone_lit_color_texture_program;
+		rect_info.start = tutorial_rect_banims->mesh.start;
+		rect_info.count = tutorial_rect_banims->mesh.count;
 
         // Add move y animation to rect_animations list
 		rect_animations.reserve(1);
-        rect_animations.emplace_back(*rect_banims, *rect_banim_moveY, BoneAnimationPlayer::Loop, 0.0f);
+        rect_animations.emplace_back(*tutorial_rect_banims, *tutorial_rect_banim_moveY, BoneAnimationPlayer::Loop, 0.0f);
 
         BoneAnimationPlayer *rectAnimation = &rect_animations.back();
     
@@ -221,14 +222,14 @@ WormMode::WormMode() : scene(*worm_scene) {
 		Scene::Drawable::Pipeline blob_info;
 		blob_info = bone_lit_color_texture_program_pipeline;
 
-		blob_info.vao = *blob_banims_for_bone_lit_color_texture_program;
-		blob_info.start = blob_banims->mesh.start;
-		blob_info.count = blob_banims->mesh.count;
+		blob_info.vao = *tutorial_blob_banims_for_bone_lit_color_texture_program;
+		blob_info.start = tutorial_blob_banims->mesh.start;
+		blob_info.count = tutorial_blob_banims->mesh.count;
 
         // Add crawl animation to worm_animations list
 		blob_animations.reserve(1);
-        blob_animations.emplace_back(*blob_banims, *blob_banim_walk, BoneAnimationPlayer::Loop, 0.0f);
-        //blob_animations.emplace_back(*blob_banims, *blob_banim_flip, BoneAnimationPlayer::Loop, 0.0f);
+        blob_animations.emplace_back(*tutorial_blob_banims, *tutorial_blob_banim_walk, BoneAnimationPlayer::Loop, 0.0f);
+        //blob_animations.emplace_back(*tutorial_blob_banims, *tutorial_blob_banim_flip, BoneAnimationPlayer::Loop, 0.0f);
 
         BoneAnimationPlayer *blobAnimation = &blob_animations.back();
     
@@ -276,10 +277,10 @@ WormMode::WormMode() : scene(*worm_scene) {
 
 }
 
-WormMode::~WormMode() {
+TutorialMode::~TutorialMode() {
 }
 
-bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
+bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 	// Ignore any keys that are the result of automatic key repeat:
 	if (evt.type == SDL_KEYDOWN && evt.key.repeat) {
 		return false;
@@ -287,109 +288,122 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
     // Morphing - switching characters
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_1) {
-        if (morph != 0) old_morph = morph;
-		morph = 0;
+        if (stage == 1 && time_elapsed > 16) {
+            if (morph != 0) old_morph = morph;
+            morph = 0;
+            stage += 1;
+            time_elapsed = 0.0f;
+        }
 		return true;
 	}
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_2) {
-        if (morph != 1) old_morph = morph;
-		morph = 1;
+        if (stage == 2 && time_elapsed > 14) {
+            if (morph != 1) old_morph = morph;
+            morph = 1;
+            stage += 1;
+            time_elapsed = 0.0f;
+        }
 		return true;
 	}
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_3) {
-        if (morph != 2) old_morph = morph;
-        morph = 2; 
+        if (stage == 3 && time_elapsed > 16) {
+            if (morph != 2) old_morph = morph;
+            morph = 2;
+            stage += 1;
+            time_elapsed = 0.0f;
+        }
         return true; 
     }
     if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_4) {
-        if (morph != 3) old_morph = morph;
-        morph = 3; 
+        if (stage == 4 && time_elapsed > 10) {
+            if (morph != 3) old_morph = morph;
+            morph = 3;
+            stage += 1;
+            time_elapsed = 0.0f;
+        }
         return true; 
     }
 
     // Movements
-	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_w) {
-		forward = true;
-        if (morph == 0) {
-            left = false;
-            right = false;
+    if (stage > 2 || (stage == 2 && time_elapsed > 3)) {
+        if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_w) {
+            forward = true;
+            if (morph == 0) {
+                left = false;
+                right = false;
+            }
+            // if (morph == 2) flipped = true;
+            return true;
         }
-        // if (morph == 2) flipped = true;
-		return true;
-	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_w) {
-		forward = false;
-		return true;
-	}
-	if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_s) {
-		backward = true;
-        if (morph == 0) {
-            left = false;
-            right = false;
+        if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_w) {
+            forward = false;
+            return true;
         }
-        // if (morph == 2) flipped = true;
-		return true;
-	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_s) {
-		backward = false;
-		return true;
-	}
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_a) {
-		left = true;
-        // if (morph == 2) flipped = true;
-		return true;
-	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_a) {
-		left = false;
-		return true;
-	}
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_d) {
-		right = true;
-        // if (morph == 2) flipped = true;
-		return true;
-	}
-	if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_d) {
-		right = false;
-		return true;
-	}
+        if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_s) {
+            backward = true;
+            if (morph == 0) {
+                left = false;
+                right = false;
+            }
+            // if (morph == 2) flipped = true;
+            return true;
+        }
+        if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_s) {
+            backward = false;
+            return true;
+        }
+        if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_a) {
+            left = true;
+            // if (morph == 2) flipped = true;
+            return true;
+        }
+        if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_a) {
+            left = false;
+            return true;
+        }
+        if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_d) {
+            right = true;
+            // if (morph == 2) flipped = true;
+            return true;
+        }
+        if (evt.type == SDL_KEYUP && evt.key.keysym.sym == SDLK_d) {
+            right = false;
+            return true;
+        }
+    }
     if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-        if (morph == 3) {
-            justFlipped = true;
-            isFlipped = !isFlipped;
+        if (stage == 5 && time_elapsed > 3) {
+            if (morph == 3) {
+                justFlipped = true;
+                isFlipped = !isFlipped;
+            }
+            stage += 1;
+            time_elapsed = 0.0f;
         }
         return true;
     }
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) { // to reset to initial position
-        camera->fovy = glm::radians(60.0f);
-        camera->near = 0.01f;
-        camera->transform->position = camera_offset_pos;
-
-        player.transform->position = start_pos;
-        player.at = walkmesh->nearest_walk_point(player.transform->position);
-
-        //rotate camera facing direction (-z) to player facing direction (+y):
-        camera->transform->rotation = camera_offset_rot;
-
-        Character ch = game_characters[morph];
-        if (ch.ctype) {
-            game_characters[morph].ch_transform->position = start_pos; 
-            game_characters[morph].ch_transform->rotation = start_rot;
-        } else { 
-            game_characters[morph].ch_animate->transform->position = start_pos; 
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+        if (stage == 0 && time_elapsed > 5) {
+            stage += 1;
+            time_elapsed = 0.0f;
         }
-        camera->transform->rotation = cam_init_rot;
-        player.transform->rotation = start_rot;
-        game_characters[morph].cangle = 0.0f;
+        if (stage == 6 && time_elapsed > 16) {
+            Mode::set_current(std::make_shared< WormMode >());
+        }
         return true;
     }
     if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_ESCAPE) {
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+        if (stage == 1 && time_elapsed > 10) {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+        }
         return true;
     } else if (evt.type == SDL_MOUSEBUTTONDOWN) { // camera move
-		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
-			SDL_SetRelativeMouseMode(SDL_TRUE);
-			return true;
-		}
+        if (stage == 1 && time_elapsed > 3) {
+            if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+                return true;
+		    }
+        }
 	} else if (evt.type == SDL_MOUSEMOTION) {
         if (morph==0||morph==3)return true; //no mouse move for worm
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
@@ -398,7 +412,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				-evt.motion.yrel / float(window_size.y)
 			);
             // TODO : check axis the mesh and camera is rotating by
-			glm::vec3 upDir = walkmesh->to_world_triangle_normal(player.at);
+			glm::vec3 upDir = tutorial_walkmesh->to_world_triangle_normal(player.at);
 			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
             float pitch = glm::pitch(camera->transform->rotation);
 			pitch += motion.y * camera->fovy;
@@ -420,44 +434,17 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
     }
-    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
-        camera->fovy = glm::radians(60.0f);
-        camera->near = 0.01f;
-        camera->transform->position = camera_offset_pos;
-
-        player.transform->position = start_pos;
-        player.at = walkmesh->nearest_walk_point(player.transform->position);
-
-        // Rotate camera facing direction (-z) to player facing direction (+y):
-        camera->transform->rotation = camera_offset_rot;
-
-        Character ch = game_characters[morph];
-        if (ch.ctype) {
-            game_characters[morph].ch_transform->position = start_pos; 
-            game_characters[morph].ch_transform->rotation = start_rot;
-        } else { 
-            game_characters[morph].ch_animate->transform->position = start_pos; 
-        }
-        camera->transform->rotation = cam_init_rot;
-        player.transform->rotation = start_rot;
-        game_characters[morph].cangle = 0.0f;
-        return true;
-    }
-    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDLK_c) {
-        camera->fovy = glm::radians(60.0f);
-        camera->near = 0.01f;
-        camera->transform->position = camera_offset_pos;
-
-        // Rotate camera facing direction (-z) to player facing direction (+y):
-        camera->transform->rotation = camera_offset_rot;
-        camera->transform->rotation = cam_init_rot;
-        game_characters[morph].cangle = 0.0f;
-    }
 	return false;
 }
 
-void WormMode::update(float elapsed) {
-    game_time += elapsed;
+void TutorialMode::update(float elapsed) {
+    // if (time_elapsed > 1) {
+    //     time_elapsed = 1;
+    // } else {
+    //     time_elapsed += elapsed;
+    // }
+
+    time_elapsed += elapsed;
     
     // Change character if input provided 
     this->morphCharacter(false); 
@@ -468,7 +455,7 @@ void WormMode::update(float elapsed) {
         if (morph == 0) {
             float step = 0.0f;
             float sideways = 0.0f;
-            float speedForward = 2.5f;
+            float speedForward = 1.0f;
             float speedSideways = 12.0f;
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -503,6 +490,7 @@ void WormMode::update(float elapsed) {
             if (!left && right) move.x = 1.0f*dir;
             if (backward && !forward) move.y =-1.0f;
             if (!backward && forward) move.y = 1.0f;
+
             // Make it so that moving diagonally doesn't go faster:
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
         } else if (morph == 2) {
@@ -518,7 +506,7 @@ void WormMode::update(float elapsed) {
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * 2.0f * PlayerSpeed * elapsed;
 
         } else if (morph == 3) {
-            float PlayerSpeed = 6.0f;
+            float PlayerSpeed = 4.0f;
 
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -541,7 +529,7 @@ void WormMode::update(float elapsed) {
 			if (remain == glm::vec3(0.0f)) break;
 			WalkPoint end;
 			float time;
-			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
+			tutorial_walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
 			if (time == 1.0f) {
 				// Finished within triangle:
@@ -552,16 +540,16 @@ void WormMode::update(float elapsed) {
 			remain *= (1.0f - time);
 			// Try to step over edge:
 			glm::quat rotation;
-			if (walkmesh->cross_edge(player.at, &end, &rotation, morph)) {
+			if (tutorial_walkmesh->cross_edge(player.at, &end, &rotation, morph)) {
 				// Stepped to a new triangle:
 				player.at = end;
 				// Rotate step to follow surface:
 				remain = rotation * remain;
 			} else {
 				// Ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+				glm::vec3 const &a = tutorial_walkmesh->vertices[player.at.indices.x];
+				glm::vec3 const &b = tutorial_walkmesh->vertices[player.at.indices.y];
+				glm::vec3 const &c = tutorial_walkmesh->vertices[player.at.indices.z];
 				glm::vec3 along = glm::normalize(b-a);
 				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
 				glm::vec3 in = glm::cross(normal, along);
@@ -581,7 +569,7 @@ void WormMode::update(float elapsed) {
 
     // Update character positions according to walkmesh
     {
-        player.transform->position = walkmesh->to_world_point(player.at);
+        player.transform->position = tutorial_walkmesh->to_world_point(player.at);
         // update character mesh's position to respect walking
         if (game_characters[morph].ctype) {
             game_characters[morph].ch_transform->position = player.transform->position;
@@ -657,11 +645,11 @@ void WormMode::update(float elapsed) {
             }
 
             // Walkmesh
-            player.transform->position = walkmesh->to_world_point(player.at);
+            player.transform->position = tutorial_walkmesh->to_world_point(player.at);
             player.transform->position.z = currZ;
 
             // update character mesh's position to respect walking
-            game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
+            game_characters[morph].ch_transform->position = tutorial_walkmesh->to_world_point(player.at);
             game_characters[morph].ch_transform->position.z = currZ;
         }
         else if (morph == 2) {
@@ -708,14 +696,14 @@ void WormMode::update(float elapsed) {
             }
 
             // Walkmesh
-            player.transform->position = walkmesh->to_world_point(player.at);
+            player.transform->position = tutorial_walkmesh->to_world_point(player.at);
            
 
             // update character mesh's position to respect walking
-            game_characters[morph].ch_animate->transform->position = walkmesh->to_world_point(player.at);
+            game_characters[morph].ch_animate->transform->position = tutorial_walkmesh->to_world_point(player.at);
 
 
-            game_characters[morph].ch_animate->transform->position += walkmesh->to_world_triangle_normal(player.at);
+            game_characters[morph].ch_animate->transform->position += tutorial_walkmesh->to_world_triangle_normal(player.at);
 
 
             for (auto &anim : rect_animations) {
@@ -766,19 +754,41 @@ void WormMode::update(float elapsed) {
     beadCollision(0.1f);
 }
 
-void WormMode::draw(glm::uvec2 const &drawable_size) {
-    if (num_beads <= 0) {
+void TutorialMode::draw(glm::uvec2 const &drawable_size) {
+    main_text_renderer->set_drawable_size(drawable_size);
+    glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+    float size_ratio = drawable_size.y / 1200.0f;
+    if (stage == 0) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
-	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        main_text_renderer->set_drawable_size(drawable_size);
-        glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
-        float size_ratio = drawable_size.y / 1200.0f;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        main_text_renderer->renderText("You Win", center.x - 450.0f * size_ratio, center.y - 50.0f * size_ratio, 1.2f * size_ratio, win_text_color);
-        main_text_renderer->renderText("Press ENTER to Play Again", center.x - 625.0f * size_ratio, 150.0f * size_ratio, 0.5f * size_ratio, main_text_color);
+        main_text_renderer->renderWrappedText(intro_text, center.y - 250.0f * size_ratio, main_text_size * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed), true);
+        main_text_renderer->renderWrappedText("Press ENTER to continue", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-5), true);
         return;
     }
+
+    if (stage == 6 && time_elapsed > 15) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        main_text_renderer->renderWrappedText("Press ENTER to start the game", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-9), true);
+        return;
+    }
+
+    // if (num_beads <= 8) {
+    //     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //     glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //     main_text_renderer->set_drawable_size(drawable_size);
+    //     glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+    //     float size_ratio = drawable_size.y / 1200.0f;
+
+    //     main_text_renderer->renderText("You Win", center.x - 450.0f * size_ratio, center.y - 50.0f * size_ratio, 1.2f * size_ratio, win_text_color);
+    //     main_text_renderer->renderText("Press ENTER to Play Again", center.x - 625.0f * size_ratio, 150.0f * size_ratio, 0.5f * size_ratio, main_text_color);
+    //     return;
+    // }
 
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
@@ -807,18 +817,63 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
     // {
 	// 	glDisable(GL_DEPTH_TEST);
 	// 	DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
-	// 	for (auto const &tri : walkmesh->triangles) {
-	// 		lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-	// 		lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-	// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 	for (auto const &tri : tutorial_walkmesh->triangles) {
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.x], tutorial_walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.y], tutorial_walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.z], tutorial_walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 	// 	}
 	// }
+    
+    if (stage == 1 && time_elapsed > 2 && time_elapsed < 7) {
+        main_text_renderer->renderWrappedText("Pan the world by clicking and moving around", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    if (stage == 1 && time_elapsed > 9 && time_elapsed < 13) {
+        main_text_renderer->renderWrappedText("Press escape to stop panning", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-10), true);
+    }
+    if (stage == 1 && time_elapsed > 15) {
+        main_text_renderer->renderWrappedText("Press the 1 key to morph into a worm", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-16), true);
+    }
+    if (stage == 2 && time_elapsed > 2 && time_elapsed < 9) {
+        main_text_renderer->renderWrappedText("Use the WASD keys to move", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    if (stage == 2 && time_elapsed > 13) {
+        main_text_renderer->renderWrappedText("Press the 2 key to morph back into a cat", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-14), true);
+    }
+    if (stage == 3 && time_elapsed > 2 && time_elapsed < 7) {
+        main_text_renderer->renderWrappedText("Each morph has unique movements and abilities", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    if (stage == 3 && time_elapsed > 9 && time_elapsed < 13) {
+        main_text_renderer->renderWrappedText("The cat has a calculated jump sequence", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-10), true);
+    }
+    if (stage == 3 && time_elapsed > 15) {
+        main_text_renderer->renderWrappedText("Press the 3 key to morph into a cube", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-16), true);
+    }
+    if (stage == 4 && time_elapsed > 2 && time_elapsed < 7) {
+        main_text_renderer->renderWrappedText("The cube can scale surfaces", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    if (stage == 4 && time_elapsed > 9) {
+        main_text_renderer->renderWrappedText("Press the 4 key to morph into the last character", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-10), true);
+    }
+    if (stage == 5 && time_elapsed > 2) {
+        main_text_renderer->renderWrappedText("Press the spacebar to send the blob through the floor", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    if (stage == 6 && time_elapsed > 2 && time_elapsed < 7) {
+        main_text_renderer->renderWrappedText("You have now entered the inverted world", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
+    }
+    // if (stage == 6 && time_elapsed > 9 && time_elapsed < 13) {
+    //     main_text_renderer->renderWrappedText("Pan the world by clicking and moving around", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-10), true);
+    // }
+    // if (stage == 6 && time_elapsed > 15) {
+    //     main_text_renderer->renderWrappedText("Press escape to stop panning", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-16), true);
+    // }
+    if (stage == 6 && time_elapsed > 9 && time_elapsed < 13) {
+        main_text_renderer->renderWrappedText("Explore the village to find the 9 beads to bring you home!", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-10), true);
+    }
+
+
+
 
     {
-        main_text_renderer->set_drawable_size(drawable_size);
-        // glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
-        float size_ratio = drawable_size.y / 1200.0f;
-
         main_text_renderer->renderText("beads remaining: " + std::to_string(num_beads), 50.0f, 50.0f, main_text_size * size_ratio, main_text_color);
         std::string new_time = std::to_string(game_time);
         std::size_t pos = new_time.find(".");
@@ -851,7 +906,7 @@ void WormMode::draw(glm::uvec2 const &drawable_size) {
 	GL_ERRORS();
 }
 
-void WormMode::morphCharacter(bool forced) {
+void TutorialMode::morphCharacter(bool forced) {
     if (old_morph != morph || forced) { 
         // Get position of previous active character
         glm::vec3 pos; 
@@ -903,7 +958,7 @@ void WormMode::morphCharacter(bool forced) {
     }
 }
 
-void WormMode::beadCollision(float eps) { 
+void TutorialMode::beadCollision(float eps) { 
     Character ch = game_characters[morph];
     glm::vec3 ch_pos;
     float threshold; 
