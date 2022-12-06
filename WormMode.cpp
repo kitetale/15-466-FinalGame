@@ -647,7 +647,7 @@ void WormMode::update(float elapsed) {
                     float extra = abs(floorZ - currZ);
                     currZ = floorZ - extra;
                     jumpDir = 1.0f;
-                    jumpNum = (jumpNum + 1) % 4;
+                    jumpNum = (jumpNum + 1) % 3;
                     if (jumpNum == 0) {
                         accel = 1.0f;
                     }
@@ -663,7 +663,7 @@ void WormMode::update(float elapsed) {
                     float extra = floorZ - currZ;
                     currZ = floorZ + extra;
                     jumpDir = 1.0f;
-                    jumpNum = (jumpNum + 1) % 4;
+                    jumpNum = (jumpNum + 1) % 3;
                     if (jumpNum == 0) {
                         accel = 1.0f;
                     }
