@@ -271,7 +271,7 @@ WormMode::WormMode() : scene(*worm_scene) {
                 } 
             }
         }
-        rectangle.ch_transform->position = character_off_pos;
+        //rectangle.ch_transform->position = character_off_pos;
     }
 
 }
