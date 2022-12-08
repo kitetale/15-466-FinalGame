@@ -593,13 +593,21 @@ void WormMode::update(float elapsed) {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
         baseZ = player.transform->position.z;
-        glm::vec3 pos = player.transform->position;
+        // glm::vec3 pos = player.transform->position;
         // std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
         // std::cout << "baseZ: " << baseZ << std::endl;
         // if (morph == 1) {
             // glm::vec3 pos1 = catball.ch_transform->position;
             // std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
         // }
+        if (morph == 1) {
+            glm::vec3 mpos = game_characters[morph].ch_transform->position;
+            glm::vec3 ppos = player.transform->position;
+            glm::vec3 cpos = catball.ch_transform->position;
+            // std::cout << "morph pos: " << mpos.x << " " << mpos.y << " " << mpos.z << "\n";
+            // std::cout << "playr pos: " << ppos.x << " " << ppos.y << " " << ppos.z << "\n";
+            // std::cout << "catba pos: " << cpos.x << " " << cpos.y << " " << cpos.z << "\n";
+        }
     }
 
     // Perform animations and other in-game interactions
@@ -625,13 +633,6 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            // Standard
-            // catball.ch_transform->position.y += remain.y;
-            // catball.ch_transform->position.x += remain.x;
-            
-            // player.transform->position = catball.ch_transform->position;
-
-           
             if (isFlipped) {
                 currZ -= moveZ;
                 if (currZ < (-1 * (jumpDist.at(jumpNum) + floorZ))) {
@@ -723,6 +724,8 @@ void WormMode::update(float elapsed) {
             game_characters[morph].ch_animate->transform->position = walkmesh->to_world_point(player.at);
 
             game_characters[morph].ch_animate->transform->position += walkmesh->to_world_triangle_normal(player.at);
+
+            game_characters[morph].ch_animate->transform->position.z += isFlipped ? -1.0f : 1.0f;
 
             for (auto &anim : rect_animations) {
                 anim.update(elapsed);
@@ -871,7 +874,10 @@ void WormMode::morphCharacter(bool forced) {
             pos = old_ch.ch_animate->transform->position; 
             rot = old_ch.ch_animate->transform->rotation;
         }
-        std::cout << "old_pos: " << pos.x << " " << pos.y << " " << pos.z << std::endl; 
+        if (old_morph == 2) {
+            pos.z += isFlipped ? -1.0f : 1.0f;
+        }
+        // std::cout << "old_pos: " << pos.x << " " << pos.y << " " << pos.z << std::endl; 
         // Update position & rotation of new character
         if (new_ch.ctype) {
             game_characters[morph].ch_transform->position = pos; 
