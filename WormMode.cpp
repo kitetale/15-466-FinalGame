@@ -133,14 +133,6 @@ WormMode::WormMode() : scene(*worm_scene) {
         cam_init_rot = camera->transform->rotation;
         start_rot = player.transform->rotation;
 
-        // Default is cat 
-        morph = 1;
-        if (morph == 1) {
-            player.transform->position = start_pos;
-	        catball.ch_transform->position = start_pos;
-            //start player walking at nearest walk point:
-            player.at = walkmesh->nearest_walk_point(player.transform->position);
-        }
     }
 
     // Worm animation setup ----------------------------------------------------
@@ -260,6 +252,14 @@ WormMode::WormMode() : scene(*worm_scene) {
         game_characters.insert(std::pair<int, Character>(1, catball));
         game_characters.insert(std::pair<int, Character>(2, rectangle));
         game_characters.insert(std::pair<int, Character>(3, blob));
+
+        // Default is cat 
+        morph = 0;
+        if (morph == 0) {
+	        worm.ch_animate->transform->position = start_pos;
+            //start player walking at nearest walk point:
+            player.at = walkmesh->nearest_walk_point(player.transform->position);
+        }
 
         // Set all other characters offscreen
         for (auto &character : game_characters) {
@@ -444,14 +444,16 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         game_characters[morph].cangle = 0.0f;
         return true;
     }
-    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDLK_c) {
+    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_c) {
         camera->fovy = glm::radians(60.0f);
         camera->near = 0.01f;
         camera->transform->position = camera_offset_pos;
 
         // Rotate camera facing direction (-z) to player facing direction (+y):
+        game_characters[morph].ch_transform->rotation = start_rot;
         camera->transform->rotation = camera_offset_rot;
         camera->transform->rotation = cam_init_rot;
+        player.transform->rotation = start_rot;
         game_characters[morph].cangle = 0.0f;
         return true;
     }
@@ -592,12 +594,12 @@ void WormMode::update(float elapsed) {
         }
         baseZ = player.transform->position.z;
         glm::vec3 pos = player.transform->position;
-        std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
-        std::cout << "baseZ: " << baseZ << std::endl;
-        if (morph == 1) {
-            glm::vec3 pos1 = catball.ch_transform->position;
-            std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
-        }
+        // std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
+        // std::cout << "baseZ: " << baseZ << std::endl;
+        // if (morph == 1) {
+            // glm::vec3 pos1 = catball.ch_transform->position;
+            // std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
+        // }
     }
 
     // Perform animations and other in-game interactions
@@ -714,17 +716,13 @@ void WormMode::update(float elapsed) {
                     rectangle.ch_animate->transform->position = prevPos;
                 }
             }
-
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
-           
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_animate->transform->position = walkmesh->to_world_point(player.at);
 
-
             game_characters[morph].ch_animate->transform->position += walkmesh->to_world_triangle_normal(player.at);
-
 
             for (auto &anim : rect_animations) {
                 anim.update(elapsed);
