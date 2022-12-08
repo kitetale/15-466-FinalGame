@@ -591,7 +591,7 @@ void WormMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
-        baseZ = player.transform->position.z;
+        // baseZ = player.transform->position.z;
         // glm::vec3 pos = player.transform->position;
         // std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
         // std::cout << "baseZ: " << baseZ << std::endl;
