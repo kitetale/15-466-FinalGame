@@ -126,7 +126,6 @@ WormMode::WormMode() : scene(*worm_scene) {
         camera->transform->position = camera_offset_pos;
 
         player.transform->position = start_pos;
-        baseZ = player.transform->position.z;
         //rotate camera facing direction (-z) to player facing direction (+y):
         camera->transform->rotation = camera_offset_rot;
 
@@ -444,7 +443,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         game_characters[morph].cangle = 0.0f;
         return true;
     }
-    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDLK_c) {
+    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_c) {
         camera->fovy = glm::radians(60.0f);
         camera->near = 0.01f;
         camera->transform->position = camera_offset_pos;
@@ -590,10 +589,8 @@ void WormMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
-        baseZ = player.transform->position.z;
         glm::vec3 pos = player.transform->position;
         std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
-        std::cout << "baseZ: " << baseZ << std::endl;
         if (morph == 1) {
             glm::vec3 pos1 = catball.ch_transform->position;
             std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
@@ -632,9 +629,9 @@ void WormMode::update(float elapsed) {
            
             if (isFlipped) {
                 currZ -= moveZ;
-                if (currZ < (-1 * (jumpDist.at(jumpNum) + floorZ))) {
-                    float extra = abs(currZ - (-1 * (jumpDist.at(jumpNum) + floorZ)));
-                    currZ = (-1 * (jumpDist.at(jumpNum) + floorZ)) + extra;
+                if (currZ < ((-1 * jumpDist.at(jumpNum)) + floorZ)) {
+                    float extra = abs(currZ - ((-1 * jumpDist.at(jumpNum)) + floorZ));
+                    currZ = ((-1 * jumpDist.at(jumpNum)) + floorZ) + extra;
                     jumpDir = -1.0f;
                 }
                 if (currZ > floorZ) {
@@ -666,7 +663,7 @@ void WormMode::update(float elapsed) {
 
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
-            player.transform->position.z = currZ + baseZ;
+            player.transform->position.z = currZ;
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
@@ -717,6 +714,7 @@ void WormMode::update(float elapsed) {
 
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
+            floorZ = player.transform->position.z;
            
 
             // update character mesh's position to respect walking
@@ -888,6 +886,12 @@ void WormMode::morphCharacter(bool forced) {
             player.transform->rotation = start_rot;
             new_ch.cangle = 0.0f;
         }
+        if (morph == 1) {
+            currZ = floorZ;
+            accel = 1.0f;
+            jumpNum = 0;
+            jumpDir = 1.0f;
+        }
 
         // Move all morphs (characters) offscreen
         for (auto &character : game_characters) {
@@ -896,12 +900,6 @@ void WormMode::morphCharacter(bool forced) {
             if (ch_num != morph) {
                 if (ch.ctype) {
                     ch.ch_transform->position = character_off_pos;
-                    if (character.first == 1) {
-                        currZ = 0.0f;
-                        accel = 1.0f;
-                        jumpNum = 0;
-                        jumpDir = 1.0f;
-                    }
                 } else {
                     ch.ch_animate->transform->position = character_off_pos;
                 } 
