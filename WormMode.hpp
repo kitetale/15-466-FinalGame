@@ -92,7 +92,6 @@ struct WormMode : public Mode {
 	float accel = 1.0f;
 	float currZ = 0.0f;
 	float moveZ = 0.0f;
-	float baseZ = 0.0f;
 
 	// 2: rectangle
 	float rectRot = 0.0f;
