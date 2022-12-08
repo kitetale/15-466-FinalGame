@@ -19,20 +19,12 @@ DIST=../dist
 
 all : \
 	$(DIST)/level.pnct \
-	$(DIST)/level.banims \
-	$(DIST)/blob.banims \
 	$(DIST)/level.w \
 	$(DIST)/level.scene 
 
 
 $(DIST)/level.pnct : level.blend $(EXPORT_MESHES)
 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platform '$@'
-
-$(DIST)/level.banims : level.blend $(EXPORT_ANIMATION)
-	$(BLENDER) --background --python $(EXPORT_ANIMATION) -- '$<' 'Armature' '[0,30]Crawl' '$@'
-
-$(DIST)/blob.banims : level.blend $(EXPORT_ANIMATION)
-	$(BLENDER) --background --python $(EXPORT_ANIMATION) -- '$<' 'BlobArmature' '[0,20]Walk;[40,70]Flip' '$@'
 
 $(DIST)/level.w : level.blend $(EXPORT_WALKMESHES)
 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'
