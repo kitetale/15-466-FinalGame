@@ -41,7 +41,7 @@ struct WormMode : public Mode {
 	float camera_elevation = glm::radians(45.0f);
 	glm::vec3 camera_offset_pos = glm::vec3(0.0f, -6.0f, 6.0f);
 	glm::quat camera_offset_rot = glm::angleAxis(glm::radians(70.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	glm::vec3 character_off_pos = glm::vec3(-100.0f, -100.0f, -100.0f);
+	glm::vec3 character_off_pos = glm::vec3(-100.0f);
 	glm::quat cam_init_rot;
 
 	// Scene:
@@ -54,7 +54,7 @@ struct WormMode : public Mode {
 	int morph = 1; // 0 is worm, 1 is cat sphere, 2 is rectangle
 	int old_morph = 1; // For changing between two characters
 
-    	//goal to reach
+	// Goal to reach
 	Scene::Transform *goal = nullptr;
 	Scene::Transform *topGoal = nullptr;
 	Scene::Transform *rectGoal = nullptr;
@@ -84,14 +84,6 @@ struct WormMode : public Mode {
 	std::vector< BoneAnimationPlayer > blob_animations;
 	std::vector< BoneAnimationPlayer > rect_animations;
 
-// 	// 1: catball
-// 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f, 16.0f };
-// 	int jumpNum = 0;
-// 	float jumpDir = 1.0f; // flip between up (1.0f and down -1.0f)
-// 	float floorZ = 0.0f;
-// 	float accel = 1.0f;
-
-
 	// 1: catball
 	std::vector<float> jumpDist = { 2.0f, 4.0f, 8.0f};
 	int jumpNum = 0;
@@ -100,11 +92,13 @@ struct WormMode : public Mode {
 	float accel = 1.0f;
 	float currZ = 0.0f;
 	float moveZ = 0.0f;
+	float baseZ = 0.0f;
 
 	// 2: rectangle
 	float rectRot = 0.0f;
 	bool xDir = false;
 	bool prevDir = false;
+
 	// 3: flipping sphere
 	bool justFlipped = false;
 	bool isFlipped = false;

@@ -126,6 +126,7 @@ WormMode::WormMode() : scene(*worm_scene) {
         camera->transform->position = camera_offset_pos;
 
         player.transform->position = start_pos;
+        baseZ = player.transform->position.z;
         //rotate camera facing direction (-z) to player facing direction (+y):
         camera->transform->rotation = camera_offset_rot;
 
@@ -391,7 +392,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEMOTION) {
-        if (morph==0||morph==3)return true; //no mouse move for worm
+        if (morph==0||morph==2||morph==3)return true; //no mouse move for worm
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
             glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
@@ -452,6 +453,7 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
         camera->transform->rotation = camera_offset_rot;
         camera->transform->rotation = cam_init_rot;
         game_characters[morph].cangle = 0.0f;
+        return true;
     }
 	return false;
 }
@@ -588,8 +590,14 @@ void WormMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
-        // glm::vec3 pos = player.transform->position;
-        // std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
+        baseZ = player.transform->position.z;
+        glm::vec3 pos = player.transform->position;
+        std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
+        std::cout << "baseZ: " << baseZ << std::endl;
+        if (morph == 1) {
+            glm::vec3 pos1 = catball.ch_transform->position;
+            std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
+        }
     }
 
     // Perform animations and other in-game interactions
@@ -658,7 +666,7 @@ void WormMode::update(float elapsed) {
 
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
-            player.transform->position.z = currZ;
+            player.transform->position.z = currZ + baseZ;
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
@@ -865,7 +873,7 @@ void WormMode::morphCharacter(bool forced) {
             pos = old_ch.ch_animate->transform->position; 
             rot = old_ch.ch_animate->transform->rotation;
         }
-        
+        std::cout << "old_pos: " << pos.x << " " << pos.y << " " << pos.z << std::endl; 
         // Update position & rotation of new character
         if (new_ch.ctype) {
             game_characters[morph].ch_transform->position = pos; 
