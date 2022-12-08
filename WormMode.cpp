@@ -620,13 +620,6 @@ void WormMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            // Standard
-            // catball.ch_transform->position.y += remain.y;
-            // catball.ch_transform->position.x += remain.x;
-            
-            // player.transform->position = catball.ch_transform->position;
-
-           
             if (isFlipped) {
                 currZ -= moveZ;
                 if (currZ < ((-1 * jumpDist.at(jumpNum)) + floorZ)) {
@@ -664,6 +657,9 @@ void WormMode::update(float elapsed) {
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
             player.transform->position.z = currZ;
+            if (isFlipped) {
+                player.transform->position.z += 1.75f;
+            }
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = walkmesh->to_world_point(player.at);
@@ -715,6 +711,9 @@ void WormMode::update(float elapsed) {
             // Walkmesh
             player.transform->position = walkmesh->to_world_point(player.at);
             floorZ = player.transform->position.z;
+            if (isFlipped) {
+                floorZ -= 1.2f;
+            }
            
 
             // update character mesh's position to respect walking
@@ -722,6 +721,9 @@ void WormMode::update(float elapsed) {
 
 
             game_characters[morph].ch_animate->transform->position += walkmesh->to_world_triangle_normal(player.at);
+            if (!isFlipped) {
+                game_characters[morph].ch_animate->transform->position.z += 2.0f;
+            }
 
 
             for (auto &anim : rect_animations) {
@@ -731,6 +733,7 @@ void WormMode::update(float elapsed) {
         else if (morph == 3) {
             // Flip if inverted
             if (justFlipped) {
+                floorZ -= isFlipped;
                 blob.ch_animate->transform->position.z *= -1;
                 blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
