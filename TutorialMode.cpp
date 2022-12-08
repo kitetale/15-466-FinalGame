@@ -1,6 +1,7 @@
 #include "TutorialMode.hpp"
 
 #include "WormMode.hpp"
+
 #include "LitColorTextureProgram.hpp"
 #include "BoneLitColorTextureProgram.hpp"
 #include "DrawLines.hpp"
@@ -133,14 +134,6 @@ TutorialMode::TutorialMode() : scene(*tutorial_worm_scene) {
         cam_init_rot = camera->transform->rotation;
         start_rot = player.transform->rotation;
 
-        // Default is cat 
-        morph = 1;
-        if (morph == 1) {
-            player.transform->position = start_pos;
-	        catball.ch_transform->position = start_pos;
-            //start player walking at nearest walk point:
-            player.at = tutorial_walkmesh->nearest_walk_point(player.transform->position);
-        }
     }
 
     // Worm animation setup ----------------------------------------------------
@@ -261,6 +254,14 @@ TutorialMode::TutorialMode() : scene(*tutorial_worm_scene) {
         game_characters.insert(std::pair<int, Character>(2, rectangle));
         game_characters.insert(std::pair<int, Character>(3, blob));
 
+        // Default is cat 
+        morph = 1;
+        if (morph == 1) {
+	        worm.ch_animate->transform->position = start_pos;
+            //start player walking at nearest walk point:
+            player.at = tutorial_walkmesh->nearest_walk_point(player.transform->position);
+        }
+
         // Set all other characters offscreen
         for (auto &character : game_characters) {
             if (character.first != morph) {
@@ -272,7 +273,7 @@ TutorialMode::TutorialMode() : scene(*tutorial_worm_scene) {
                 } 
             }
         }
-        rectangle.ch_transform->position = character_off_pos;
+        //rectangle.ch_transform->position = character_off_pos;
     }
 
 }
@@ -321,7 +322,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
             stage += 1;
             time_elapsed = 0.0f;
         }
-        return true; 
+        return true;
     }
 
     // Movements
@@ -378,17 +379,19 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
                 isFlipped = !isFlipped;
             }
             stage += 1;
-            time_elapsed = 0.0f;
+            time_elapsed = 8.0f;
         }
         return true;
     }
-    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
+    if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) { // to reset to initial position
         if (stage == 0 && time_elapsed > 5) {
             stage += 1;
             time_elapsed = 0.0f;
-        }
-        if (stage == 6 && time_elapsed > 16) {
+        } else if (stage == 7 || (stage == 6 && time_elapsed > 16)) {
             Mode::set_current(std::make_shared< WormMode >());
+        } else {
+            stage = 7;
+            time_elapsed = 15.0f;
         }
         return true;
     }
@@ -398,14 +401,14 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
         }
         return true;
     } else if (evt.type == SDL_MOUSEBUTTONDOWN) { // camera move
-        if (stage == 1 && time_elapsed > 3) {
+		if (stage == 1 && time_elapsed > 3) {
             if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
                 SDL_SetRelativeMouseMode(SDL_TRUE);
                 return true;
 		    }
         }
 	} else if (evt.type == SDL_MOUSEMOTION) {
-        if (morph==0||morph==3)return true; //no mouse move for worm
+        if (morph==0||morph==2||morph==3)return true; //no mouse move for worm
 		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
             glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
@@ -413,7 +416,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
 			);
             // TODO : check axis the mesh and camera is rotating by
 			glm::vec3 upDir = tutorial_walkmesh->to_world_triangle_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
+			player.transform->rotation = glm::angleAxis(motion.x * camera->fovy, upDir) * player.transform->rotation;
             float pitch = glm::pitch(camera->transform->rotation);
 			pitch += motion.y * camera->fovy;
 			//camera looks down -z (basically at the player's feet) when pitch is at zero.
@@ -426,7 +429,7 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
                 if (character.first == morph) {
                     Character &ch = character.second;
                     // store angle/ direction facing for character and reconstruct 
-                    ch.cangle += -motion.x * camera->fovy;
+                    ch.cangle += motion.x * camera->fovy;
                     //std::cout<<"("<<upDir.x<<", "<<upDir.y<<", "<<upDir.z<<")"<<std::endl;
                     ch.ch_transform->rotation = glm::angleAxis(ch.cangle, upDir);
                 }
@@ -434,16 +437,10 @@ bool TutorialMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_s
 			return true;
 		}
     }
-	return false;
+    return false;
 }
 
 void TutorialMode::update(float elapsed) {
-    // if (time_elapsed > 1) {
-    //     time_elapsed = 1;
-    // } else {
-    //     time_elapsed += elapsed;
-    // }
-
     time_elapsed += elapsed;
     
     // Change character if input provided 
@@ -455,7 +452,7 @@ void TutorialMode::update(float elapsed) {
         if (morph == 0) {
             float step = 0.0f;
             float sideways = 0.0f;
-            float speedForward = 1.0f;
+            float speedForward = 2.5f;
             float speedSideways = 12.0f;
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -490,7 +487,6 @@ void TutorialMode::update(float elapsed) {
             if (!left && right) move.x = 1.0f*dir;
             if (backward && !forward) move.y =-1.0f;
             if (!backward && forward) move.y = 1.0f;
-
             // Make it so that moving diagonally doesn't go faster:
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
         } else if (morph == 2) {
@@ -506,7 +502,7 @@ void TutorialMode::update(float elapsed) {
             if (move != glm::vec3(0.0f)) move = glm::normalize(move) * 2.0f * PlayerSpeed * elapsed;
 
         } else if (morph == 3) {
-            float PlayerSpeed = 4.0f;
+            float PlayerSpeed = 6.0f;
 
             float dir = isFlipped ? -1.0f : 1.0f;
 
@@ -567,7 +563,7 @@ void TutorialMode::update(float elapsed) {
 		}
     }
 
-    // Update character positions according to walkmesh
+    // Update character positions according to tutorial_walkmesh
     {
         player.transform->position = tutorial_walkmesh->to_world_point(player.at);
         // update character mesh's position to respect walking
@@ -576,8 +572,6 @@ void TutorialMode::update(float elapsed) {
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
         }
-        // glm::vec3 pos = player.transform->position;
-        // std::cout << pos.x << " " << pos.y << " " << pos.z << "\n";
     }
 
     // Perform animations and other in-game interactions
@@ -603,25 +597,18 @@ void TutorialMode::update(float elapsed) {
             }
         }
         if (morph == 1) {
-            // Standard
-            // catball.ch_transform->position.y += remain.y;
-            // catball.ch_transform->position.x += remain.x;
-            
-            // player.transform->position = catball.ch_transform->position;
-
-           
             if (isFlipped) {
                 currZ -= moveZ;
-                if (currZ < (-1 * (jumpDist.at(jumpNum) + floorZ))) {
-                    float extra = abs(currZ - (-1 * (jumpDist.at(jumpNum) + floorZ)));
-                    currZ = (-1 * (jumpDist.at(jumpNum) + floorZ)) + extra;
+                if (currZ < ((-1 * jumpDist.at(jumpNum)) + floorZ)) {
+                    float extra = abs(currZ - ((-1 * jumpDist.at(jumpNum)) + floorZ));
+                    currZ = ((-1 * jumpDist.at(jumpNum)) + floorZ) + extra;
                     jumpDir = -1.0f;
                 }
                 if (currZ > floorZ) {
                     float extra = abs(floorZ - currZ);
                     currZ = floorZ - extra;
                     jumpDir = 1.0f;
-                    jumpNum = (jumpNum + 1) % 4;
+                    jumpNum = (jumpNum + 1) % 3;
                     if (jumpNum == 0) {
                         accel = 1.0f;
                     }
@@ -637,7 +624,7 @@ void TutorialMode::update(float elapsed) {
                     float extra = floorZ - currZ;
                     currZ = floorZ + extra;
                     jumpDir = 1.0f;
-                    jumpNum = (jumpNum + 1) % 4;
+                    jumpNum = (jumpNum + 1) % 3;
                     if (jumpNum == 0) {
                         accel = 1.0f;
                     }
@@ -647,6 +634,9 @@ void TutorialMode::update(float elapsed) {
             // Walkmesh
             player.transform->position = tutorial_walkmesh->to_world_point(player.at);
             player.transform->position.z = currZ;
+            if (isFlipped) {
+                player.transform->position.z += 1.75f;
+            }
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_transform->position = tutorial_walkmesh->to_world_point(player.at);
@@ -694,17 +684,23 @@ void TutorialMode::update(float elapsed) {
                     rectangle.ch_animate->transform->position = prevPos;
                 }
             }
-
             // Walkmesh
             player.transform->position = tutorial_walkmesh->to_world_point(player.at);
+            floorZ = player.transform->position.z;
+            if (isFlipped) {
+                floorZ -= 1.2f;
+            }
            
 
             // update character mesh's position to respect walking
             game_characters[morph].ch_animate->transform->position = tutorial_walkmesh->to_world_point(player.at);
 
-
             game_characters[morph].ch_animate->transform->position += tutorial_walkmesh->to_world_triangle_normal(player.at);
+            if (!isFlipped) {
+                game_characters[morph].ch_animate->transform->position.z += 2.0f;
+            }
 
+            game_characters[morph].ch_animate->transform->position.z += isFlipped ? -1.0f : 1.0f;
 
             for (auto &anim : rect_animations) {
                 anim.update(elapsed);
@@ -713,6 +709,7 @@ void TutorialMode::update(float elapsed) {
         else if (morph == 3) {
             // Flip if inverted
             if (justFlipped) {
+                floorZ -= isFlipped;
                 blob.ch_animate->transform->position.z *= -1;
                 blob.ch_animate->transform->rotation *= glm::angleAxis(glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -754,6 +751,95 @@ void TutorialMode::update(float elapsed) {
     beadCollision(0.1f);
 }
 
+
+
+/*
+void TutorialMode::draw(glm::uvec2 const &drawable_size) {
+    if (num_beads <= 0) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        main_text_renderer->set_drawable_size(drawable_size);
+        glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+        float size_ratio = drawable_size.y / 1200.0f;
+
+        main_text_renderer->renderText("You Win", center.x - 450.0f * size_ratio, center.y - 50.0f * size_ratio, 1.2f * size_ratio, win_text_color);
+        main_text_renderer->renderText("Press ENTER to Play Again", center.x - 625.0f * size_ratio, 150.0f * size_ratio, 0.5f * size_ratio, main_text_color);
+        return;
+    }
+
+	//update camera aspect ratio for drawable:
+	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+
+	//Draw scene:
+    //set up light type and position for lit_color_texture_program:
+	// TODO: consider using the Light(s) in the scene to do this
+	glUseProgram(lit_color_texture_program->program);
+	glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
+	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f,-1.0f)));
+	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
+	glUseProgram(0);
+
+    // grey world background 
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//set up basic OpenGL state:
+	glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
+
+	scene.draw(*camera);
+
+    // // Walkmesh 
+    // {
+	// 	glDisable(GL_DEPTH_TEST);
+	// 	DrawLines lines(camera->make_projection() * glm::mat4(camera->transform->make_world_to_local()));
+	// 	for (auto const &tri : tutorial_walkmesh->triangles) {
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.x], tutorial_walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.y], tutorial_walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 		lines.draw(tutorial_walkmesh->vertices[tri.z], tutorial_walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+	// 	}
+	// }
+
+    {
+        main_text_renderer->set_drawable_size(drawable_size);
+        // glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
+        float size_ratio = drawable_size.y / 1200.0f;
+
+        main_text_renderer->renderText("beads remaining: " + std::to_string(num_beads), 50.0f, 50.0f, main_text_size * size_ratio, main_text_color);
+        std::string new_time = std::to_string(game_time);
+        std::size_t pos = new_time.find(".");
+        main_text_renderer->renderText("time: " + new_time.substr(0,pos+3), drawable_size.x - 350.0f * size_ratio, 50.0f, main_text_size * size_ratio, main_text_color);
+    }
+
+    { //use DrawLines to overlay some text:
+		glDisable(GL_DEPTH_TEST);
+		float aspect = float(drawable_size.x) / float(drawable_size.y);
+		DrawLines lines(glm::mat4(
+			1.0f / aspect, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		));
+
+        // TODO: add num bead counts in a better format 
+		constexpr float H = 0.09f;
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs                            beads remaining: " + std::to_string(num_beads),
+			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
+		float ofs = 2.0f / drawable_size.y;
+		lines.draw_text("WASD moves; Space for specialty, NumKeys Morphs                            beads remaining: " + std::to_string(num_beads),
+			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+	}
+
+	GL_ERRORS();
+}
+*/
+
 void TutorialMode::draw(glm::uvec2 const &drawable_size) {
     main_text_renderer->set_drawable_size(drawable_size);
     glm::uvec2 center = glm::uvec2(drawable_size.x / 2, drawable_size.y / 2);
@@ -768,7 +854,7 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
         return;
     }
 
-    if (stage == 6 && time_elapsed > 15) {
+    if (stage == 7 || (stage == 6 && time_elapsed > 15)) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -823,6 +909,9 @@ void TutorialMode::draw(glm::uvec2 const &drawable_size) {
 	// 		lines.draw(tutorial_walkmesh->vertices[tri.z], tutorial_walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
 	// 	}
 	// }
+
+    main_text_renderer->renderWrappedText("Press ENTER to skip to end of tutorial", 0.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed), true);
+
     
     if (stage == 1 && time_elapsed > 2 && time_elapsed < 7) {
         main_text_renderer->renderWrappedText("Pan the world by clicking and moving around", 50.0f * size_ratio, 0.2f * size_ratio, lerp(dark_text_color, main_text_color, time_elapsed-3), true);
@@ -920,7 +1009,10 @@ void TutorialMode::morphCharacter(bool forced) {
             pos = old_ch.ch_animate->transform->position; 
             rot = old_ch.ch_animate->transform->rotation;
         }
-        
+        if (old_morph == 2) {
+            pos.z += isFlipped ? -1.0f : 1.0f;
+        }
+        // std::cout << "old_pos: " << pos.x << " " << pos.y << " " << pos.z << std::endl; 
         // Update position & rotation of new character
         if (new_ch.ctype) {
             game_characters[morph].ch_transform->position = pos; 
@@ -935,6 +1027,12 @@ void TutorialMode::morphCharacter(bool forced) {
             player.transform->rotation = start_rot;
             new_ch.cangle = 0.0f;
         }
+        if (morph == 1) {
+            currZ = floorZ;
+            accel = 1.0f;
+            jumpNum = 0;
+            jumpDir = 1.0f;
+        }
 
         // Move all morphs (characters) offscreen
         for (auto &character : game_characters) {
@@ -943,12 +1041,6 @@ void TutorialMode::morphCharacter(bool forced) {
             if (ch_num != morph) {
                 if (ch.ctype) {
                     ch.ch_transform->position = character_off_pos;
-                    if (character.first == 1) {
-                        currZ = 0.0f;
-                        accel = 1.0f;
-                        jumpNum = 0;
-                        jumpDir = 1.0f;
-                    }
                 } else {
                     ch.ch_animate->transform->position = character_off_pos;
                 } 

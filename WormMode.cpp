@@ -420,29 +420,6 @@ bool WormMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
     }
-    else if (evt.type == SDL_KEYDOWN && evt.key.keysym.scancode == SDL_SCANCODE_RETURN) {
-        camera->fovy = glm::radians(60.0f);
-        camera->near = 0.01f;
-        camera->transform->position = camera_offset_pos;
-
-        player.transform->position = start_pos;
-        player.at = walkmesh->nearest_walk_point(player.transform->position);
-
-        // Rotate camera facing direction (-z) to player facing direction (+y):
-        camera->transform->rotation = camera_offset_rot;
-
-        Character ch = game_characters[morph];
-        if (ch.ctype) {
-            game_characters[morph].ch_transform->position = start_pos; 
-            game_characters[morph].ch_transform->rotation = start_rot;
-        } else { 
-            game_characters[morph].ch_animate->transform->position = start_pos; 
-        }
-        camera->transform->rotation = cam_init_rot;
-        player.transform->rotation = start_rot;
-        game_characters[morph].cangle = 0.0f;
-        return true;
-    }
     else if (evt.type == SDL_KEYDOWN && evt.key.keysym.sym == SDLK_c) {
         camera->fovy = glm::radians(60.0f);
         camera->near = 0.01f;
@@ -590,24 +567,6 @@ void WormMode::update(float elapsed) {
             game_characters[morph].ch_transform->position = player.transform->position;
         } else {
             game_characters[morph].ch_animate->transform->position = player.transform->position;
-        }
-        // baseZ = player.transform->position.z;
-        // glm::vec3 pos = player.transform->position;
-        // std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
-        // std::cout << "baseZ: " << baseZ << std::endl;
-        // if (morph == 1) {
-            // glm::vec3 pos1 = catball.ch_transform->position;
-            // std::cout << "catball pos: " << pos1.x << " " << pos1.y << " " << pos1.z << "\n";
-        // }
-        // glm::vec3 pos = player.transform->position;
-        // std::cout << "morph: " << morph << " pos: " << pos.x << " " << pos.y << " " << pos.z << "\n";
-        if (morph == 1) {
-            glm::vec3 mpos = game_characters[morph].ch_transform->position;
-            glm::vec3 ppos = player.transform->position;
-            glm::vec3 cpos = catball.ch_transform->position;
-            // std::cout << "morph pos: " << mpos.x << " " << mpos.y << " " << mpos.z << "\n";
-            // std::cout << "playr pos: " << ppos.x << " " << ppos.y << " " << ppos.z << "\n";
-            // std::cout << "catba pos: " << cpos.x << " " << cpos.y << " " << cpos.z << "\n";
         }
     }
 
