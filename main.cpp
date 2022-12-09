@@ -4,6 +4,7 @@
 //Starting mode:
 #include "WormMode.hpp"
 #include "SplashScreenMode.hpp"
+#include "GP22IntroMode.hpp"
 
 //Deal with calling resource loading functions:
 #include "Load.hpp"
@@ -100,7 +101,7 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	Mode::set_current(std::make_shared< SplashScreenMode >());
+	Mode::set_current(std::make_shared< GP22IntroMode >( std::make_shared< SplashScreenMode >() ));
 
 	//------------ main loop ------------
 

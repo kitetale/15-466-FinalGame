@@ -146,6 +146,7 @@ const game_names = [
 	maek.CPP('WormMode.cpp'),
 	maek.CPP('TutorialMode.cpp'),
 	maek.CPP('SplashScreenMode.cpp'),
+	maek.CPP('GP22IntroMode.cpp'),
 	maek.CPP('BoneAnimation.cpp'),
 	maek.CPP('BoneLitColorTextureProgram.cpp')
 ];
